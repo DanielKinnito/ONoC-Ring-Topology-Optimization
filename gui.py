@@ -6,21 +6,21 @@ def run_simulation():
     """Run the simulation with the specified parameters."""
     try:
         num_nodes = int(entry_nodes.get())
-        source_node = int(entry_source.get())
-        target_node = int(entry_target.get())
+        sources = list(map(int, entry_sources.get().split(',')))
+        targets = list(map(int, entry_targets.get().split(',')))
         partition_size = int(entry_partition.get())
         wc = float(entry_wc.get())
         wt = float(entry_wt.get())
 
-        if source_node >= num_nodes or target_node >= num_nodes:
+        if any(source >= num_nodes for source in sources) or any(target >= num_nodes for target in targets):
             messagebox.showerror("Error", "Source or Target node is out of range!")
             return
 
         # Run the simulation with specified parameters
-        main(num_nodes, partition_size, wc, wt, source_node, target_node)
+        main(num_nodes, partition_size, wc, wt, sources, targets)
 
         # Show success message
-        messagebox.showinfo("Success", "Simulation completed successfully! Check the graphs and CSV file.")
+        messagebox.showinfo("Success", "Simulation completed successfully! Check the graphs and CSV files.")
     except ValueError:
         messagebox.showerror("Error", "Please enter valid numeric values for all parameters.")
 
@@ -37,15 +37,15 @@ entry_nodes = ttk.Entry(frame, width=20)
 entry_nodes.grid(column=1, row=0)
 entry_nodes.insert(0, "200")
 
-ttk.Label(frame, text="Source Node:").grid(column=0, row=1, sticky=tk.W)
-entry_source = ttk.Entry(frame, width=20)
-entry_source.grid(column=1, row=1)
-entry_source.insert(0, "0")
+ttk.Label(frame, text="Source Nodes (comma-separated):").grid(column=0, row=1, sticky=tk.W)
+entry_sources = ttk.Entry(frame, width=20)
+entry_sources.grid(column=1, row=1)
+entry_sources.insert(0, "0,10")
 
-ttk.Label(frame, text="Target Node:").grid(column=0, row=2, sticky=tk.W)
-entry_target = ttk.Entry(frame, width=20)
-entry_target.grid(column=1, row=2)
-entry_target.insert(0, "50")
+ttk.Label(frame, text="Target Nodes (comma-separated):").grid(column=0, row=2, sticky=tk.W)
+entry_targets = ttk.Entry(frame, width=20)
+entry_targets.grid(column=1, row=2)
+entry_targets.insert(0, "50,60")
 
 ttk.Label(frame, text="Partition Size:").grid(column=0, row=3, sticky=tk.W)
 entry_partition = ttk.Entry(frame, width=20)

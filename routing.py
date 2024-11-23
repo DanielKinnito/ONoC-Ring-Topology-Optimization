@@ -36,3 +36,15 @@ def bidirectional_search(graph, source, target, wc, wt):
         return clockwise_path, clockwise_score
     else:
         return counterclockwise_path[::-1], counterclockwise_score
+
+def multicast_search(graph, sources, targets, wc, wt):
+    """Performs a multicast search and selects the optimal paths."""
+    best_paths = []
+    best_scores = []
+
+    for source, target in zip(sources, targets):
+        best_path, best_score = bidirectional_search(graph, source, target, wc, wt)
+        best_paths.append(best_path)
+        best_scores.append(best_score)
+
+    return best_paths, best_scores
