@@ -2,15 +2,14 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
 
-def visualize_topology(graph, best_path):
+def visualize_topology(graph, best_path, partition_size):
     """Visualizes the ring topology with temperatures and highlights the best path."""
     pos = nx.circular_layout(graph)
     node_colors = [graph.nodes[n]['temperature'] for n in graph.nodes]
 
-    # Draw the graph with temperature coloring
     fig, ax = plt.subplots()
     nx.draw(graph, pos, with_labels=True, node_color=node_colors, cmap=plt.cm.coolwarm, node_size=500, ax=ax)
-    
+
     # Highlight the best path
     edges_in_path = list(zip(best_path[:-1], best_path[1:]))
     nx.draw_networkx_edges(graph, pos, edgelist=edges_in_path, edge_color='red', width=2, ax=ax)
@@ -20,6 +19,23 @@ def visualize_topology(graph, best_path):
     sm = plt.cm.ScalarMappable(cmap=plt.cm.coolwarm)
     sm.set_array(node_colors)
     plt.colorbar(sm, ax=ax, label='Temperature (°C)')
+
+    # Set up zoom functionality
+    def on_zoom(event):
+        scale_factor = 1.1 if event.button == 'up' else 0.9
+        cur_xlim = ax.get_xlim()
+        cur_ylim = ax.get_ylim()
+        xdata = event.xdata
+        ydata = event.ydata
+        new_width = (cur_xlim[1] - cur_xlim[0]) * scale_factor
+        new_height = (cur_ylim[1] - cur_ylim[0]) * scale_factor
+        relx = (cur_xlim[1] - xdata) / (cur_xlim[1] - cur_xlim[0])
+        rely = (cur_ylim[1] - ydata) / (cur_ylim[1] - cur_ylim[0])
+        ax.set_xlim([xdata - new_width * (1 - relx), xdata + new_width * (relx)])
+        ax.set_ylim([ydata - new_height * (1 - rely), ydata + new_height * (rely)])
+        fig.canvas.draw_idle()
+
+    fig.canvas.mpl_connect('scroll_event', on_zoom)
     plt.show()
 
 def visualize_path_metrics(graph, path):
