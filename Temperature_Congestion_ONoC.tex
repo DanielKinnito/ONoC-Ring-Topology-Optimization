@@ -5,7 +5,7 @@
 \usepackage{hyperref}
 \usepackage{cite}
 
-\title{Temperature and Congestion-Aware Multi-cast Communication in Ring-Based Optical Network-on-Chip (ONoC)}
+\title{TempCon-RingCast: Temperature and Congestion-Aware Multi-cast Communication in Ring-Based Optical Network-on-Chip (ONoC)}
 
 \author{
     \IEEEauthorblockN{Abubeker Yasmin Mustefa\IEEEauthorrefmark{1}, Daniel Mekonnen Ejeta\IEEEauthorrefmark{2}}
@@ -93,8 +93,8 @@ The path with the lowest combined score is selected, ensuring an optimal balance
 \section{Simulation Setup and Parameters}
 The proposed routing method was evaluated using a simulation environment that models a ring-based ONoC under varying traffic and temperature conditions. The simulation parameters are as follows:
 \begin{itemize}
-    \item \textbf{Number of Nodes:} 40
-    \item \textbf{Partition Size:} 5% of total nodes
+    \item \textbf{Number of Nodes:} 100
+    \item \textbf{Partition Size:} 10
     \item \textbf{Weight for Congestion (w\textsubscript{c}):} 0.6
     \item \textbf{Weight for Temperature (w\textsubscript{t}):} 0.4
     \item \textbf{Source Nodes:} [4, 37]
@@ -111,12 +111,16 @@ Simulation results show that the temperature and congestion-aware routing method
     \label{fig:ring_topology}
 \end{figure}
 
+Figure \ref{fig:ring_topology} shows the ring topology with nodes colored based on their temperature. The best paths are highlighted in red, while source nodes are highlighted in green and target nodes in blue. This visualization helps to understand the overall network structure and the paths selected by the algorithm.
+
 \begin{figure}[h]
     \centering
     \includegraphics[width=\linewidth]{path_metrics.png}
     \caption{Path Metrics: Congestion and Temperature}
     \label{fig:path_metrics}
 \end{figure}
+
+Figure \ref{fig:path_metrics} illustrates the congestion and temperature metrics for the selected paths. Congestion is plotted as bars, and temperature is plotted as a line. This figure provides insights into the performance metrics of the selected paths, showing how the algorithm balances congestion and temperature.
 
 \section{Conclusion and Future Work}
 This study presents a comprehensive routing approach for multi-cast communication in ring-based ONoCs, addressing both temperature and congestion concerns. By incorporating real-time monitoring and adaptive path selection, the algorithm effectively balances thermal distribution and reduces network congestion. Future work will explore refining the temperature and congestion thresholds, potentially extending this methodology to other ONoC topologies to enhance scalability and performance in larger systems.
