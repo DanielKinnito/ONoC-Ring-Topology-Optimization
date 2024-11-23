@@ -1,144 +1,105 @@
 # ONoC-Ring-Topology-Optimization
-Algorithm for optimizing ONoC ring topology networks with a congestion-aware heuristic algorithm simulated with OMNeT++.
 
-## Steps to Set Up OMNeT++
-- Download and Install OMNeT++:
+This project implements an algorithm for optimizing Optical Network-on-Chip (ONoC) ring topology networks with a congestion-aware heuristic algorithm. The project includes a simulation with visualization capabilities.
 
-Download OMNeT++ from the official website.
-Follow the installation instructions for Windows.
-Create a New Project:
+## Features
 
-Open OMNeT++ and create a new project using the IDE.
-Set Up the Network Topology:
+- Create a ring topology with a specified number of nodes.
+- Partition nodes for load balancing.
+- Perform multicast search to find the best paths from multiple sources to multiple targets.
+- Visualize the ring topology with temperature and congestion metrics.
+- Highlight the best paths and allow interactive selection of source nodes to visualize specific paths.
+- Generate summary tables of path metrics and save them to CSV files.
 
-Define the ring topology and implement the congestion-aware heuristic routing algorithm.
-Example Implementation
-Step 1: Define the Network Topology in NED
-Create a .ned file to define the ring topology:
+## Requirements
 
-ned
-Copy code
-network RingTopology
-{
-    parameters:
-        int numNodes;
-    submodules:
-        node[numNodes]: Node;
-    connections allowunconnected:
-        for i=0..numNodes-1 {
-            node[i].pppg++ <--> {delay = 2ms; datarate = 1Gbps;} <--> node[(i+1)%numNodes].pppg++;
-        }
-}
-Step 2: Define the Node
-Create a Node.ned file to define the node structure:
+- Python 3.8+
+- NetworkX
+- Matplotlib
+- Pandas
 
-ned
-Copy code
-simple Node
-{
-    gates:
-        input pppg[];
-        output pppg[];
-    parameters:
-        @display("i=block/cogwheel");
-}
-Step 3: Implement the Congestion-Aware Heuristic Routing Algorithm
-Create a C++ file for the routing logic (CongestionAwareRouting.cc):
+Install the required packages using:
 
-cpp
-Copy code
-#include <omnetpp.h>
-#include "CongestionAwareRouting_m.h"
+```sh
+pip install -r [requirements.txt](http://_vscodecontentref_/1)
+```
 
-using namespace omnetpp;
+## Usage
 
-class CongestionAwareRouting : public cSimpleModule
-{
-  private:
-    int numNodes;
-    int threshold;
-    std::vector<int> congestionLevels;
+### Running the Simulation
 
-  protected:
-    virtual void initialize() override;
-    virtual void handleMessage(cMessage *msg) override;
-    void updateCongestionLevels();
-    int calculateThreshold();
-    const char* findPath(int source, int destination);
+You can run the simulation using the GUI or directly from the command line.
 
-  public:
-    CongestionAwareRouting();
-};
+Using the GUI
 
-Define_Module(CongestionAwareRouting);
+1.Run the gui.py script:
 
-CongestionAwareRouting::CongestionAwareRouting() {}
+```python
+python gui.py
+```
 
-void CongestionAwareRouting::initialize()
-{
-    numNodes = par("numNodes");
-    threshold = calculateThreshold();
-    congestionLevels.resize(numNodes, 0);
-    scheduleAt(simTime() + 1, new cMessage("updateCongestion"));
-}
+2.Enter the required parameters in the GUI:
+    - Number of Nodes
+    - Source Nodes (comma-separated)
+    - Target Nodes (comma-separated)
+    - Partition Size
+    - Weight for Congestion (wc)
+    - Weight for Temperature (wt)
 
-void CongestionAwareRouting::handleMessage(cMessage *msg)
-{
-    if (strcmp(msg->getName(), "updateCongestion") == 0)
-    {
-        updateCongestionLevels();
-        scheduleAt(simTime() + 1, msg);
-    }
-    else
-    {
-        // Handle incoming packets and route them
-        cPacket *pkt = check_and_cast<cPacket *>(msg);
-        int source = pkt->getArrivalGate()->getIndex();
-        int destination = pkt->getKind(); // Assuming destination is set in the kind field
-        const char* path = findPath(source, destination);
-        send(pkt, path);
-    }
-}
+3.Click "Run Simulation" to start the simulation. The results will be displayed in the console, and the visualizations will be shown in separate windows.
 
-void CongestionAwareRouting::updateCongestionLevels()
-{
-    // Simulate congestion update logic
-    for (int i = 0; i < numNodes; ++i)
-    {
-        congestionLevels[i] = intuniform(0, 10);
-    }
-}
+### Using the Command Line
 
-int CongestionAwareRouting::calculateThreshold()
-{
-    return numNodes / 2;
-}
+1.Edit the main.py file to specify the parameters:
 
-const char* CongestionAwareRouting::findPath(int source, int destination)
-{
-    int distanceCW = (destination - source + numNodes) % numNodes;
-    int distanceCCW = (source - destination + numNodes) % numNodes;
-    if (distanceCW > threshold)
-        return "pppg$o[0]"; // Clockwise
-    else if (distanceCCW > threshold)
-        return "pppg$o[1]"; // Counterclockwise
-    else
-    {
-        int cwCongestion = 0, ccwCongestion = 0;
-        for (int i = 0; i < threshold; ++i)
-        {
-            cwCongestion += congestionLevels[(source + i) % numNodes];
-            ccwCongestion += congestionLevels[(source - i + numNodes) % numNodes];
-        }
-        return (cwCongestion < ccwCongestion) ? "pppg$o[0]" : "pppg$o[1]";
-    }
-}
-Step 4: Compile and Run the Simulation
-Open the OMNeT++ IDE.
-Create a new simulation configuration in the omnetpp.ini file:
-ini
-Copy code
-[General]
-network = RingTopology
-numNodes = 10
-Build and run the simulation using the IDE.
+```python
+if __name__ == "__main__":
+    sources = [0, 10]  # Example sources
+    targets = [50, 60]  # Example targets
+    main(100, 10, 0.6, 0.4, sources, targets)
+```
+
+2.Run the main.py script:
+
+```python
+python main.py
+```
+
+## Visualization
+
+The visualization includes
+    - The ring topology with nodes colored based on their temperature.
+    - The best paths highlighted in red.
+    - Source nodes highlighted in green and target nodes in blue.
+    - Interactive zoom functionality.
+    - Click functionality to highlight the best path from a selected source node in green.
+
+## Generating Summary Tables
+
+The simulation generates summary tables of path metrics (temperature and congestion) and saves them to CSV files. The summary tables include:
+    - Node index
+    - Temperature (°C)
+    - Congestion (%)
+    - Weighted Score
+
+## Project Structure
+
+ONoC-Ring-Topology-Optimization/
+├── __pycache__/
+├── .gitignore
+├── [gui.py](http://_vscodecontentref_/2)
+├── LICENSE
+├── [main.py](http://_vscodecontentref_/3)
+├── [metrics.py](http://_vscodecontentref_/4)
+├── [path_metrics_summary_1.csv](http://_vscodecontentref_/5)
+├── [path_metrics_summary_2.csv](http://_vscodecontentref_/6)
+├── [path_metrics_summary.csv](http://_vscodecontentref_/7)
+├── [README.md](http://_vscodecontentref_/8)
+├── [requirements.txt](http://_vscodecontentref_/9)
+├── [routing.py](http://_vscodecontentref_/10)
+├── [topology.py](http://_vscodecontentref_/11)
+└── [visualization.py](http://_vscodecontentref_/12)
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
