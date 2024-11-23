@@ -18,7 +18,7 @@ def main(num_nodes, partition_size, wc, wt, sources, targets):
         print(f"Best Score {i+1}:", score)
 
     # Visualize the ring topology with the best paths highlighted
-    visualize_topology(ring, best_paths, partition_size)
+    visualize_topology(ring, best_paths, sources, targets, partition_size)
 
     # Visualize the path metrics (congestion and temperature)
     for path in best_paths:

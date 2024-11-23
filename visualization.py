@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import pandas as pd
 
-def visualize_topology(graph, paths, partition_size):
+def visualize_topology(graph, paths, sources, targets, partition_size):
     """Visualizes the ring topology with temperatures and highlights the best paths."""
     pos = nx.circular_layout(graph)
     node_colors = [graph.nodes[n]['temperature'] for n in graph.nodes]
@@ -14,6 +14,10 @@ def visualize_topology(graph, paths, partition_size):
     for path in paths:
         edges_in_path = list(zip(path[:-1], path[1:]))
         nx.draw_networkx_edges(graph, pos, edgelist=edges_in_path, edge_color='red', width=2, ax=ax)
+
+    # Highlight source and target nodes
+    nx.draw_networkx_nodes(graph, pos, nodelist=sources, node_color='green', node_size=700, ax=ax, label='Sources')
+    nx.draw_networkx_nodes(graph, pos, nodelist=targets, node_color='blue', node_size=700, ax=ax, label='Targets')
 
     # Add title and color bar
     plt.title("Ring Topology with Temperature and Best Paths Highlighted")
@@ -32,11 +36,26 @@ def visualize_topology(graph, paths, partition_size):
         new_height = (cur_ylim[1] - cur_ylim[0]) * scale_factor
         relx = (cur_xlim[1] - xdata) / (cur_xlim[1] - cur_xlim[0])
         rely = (cur_ylim[1] - ydata) / (cur_ylim[1] - cur_ylim[0])
-        ax.set_xlim([xdata - new_width * (1 - relx), xdata + new_width * (relx)])
-        ax.set_ylim([ydata - new_height * (1 - rely)])
+        ax.set_xlim([xdata - new_width * (1 - relx), xdata + new_width * relx])
+        ax.set_ylim([ydata - new_height * (1 - rely), ydata + new_height * rely])
         fig.canvas.draw_idle()
 
     fig.canvas.mpl_connect('scroll_event', on_zoom)
+
+    # Set up click functionality to highlight the best path from a source node
+    def on_click(event):
+        if event.inaxes is not ax:
+            return
+        x, y = event.xdata, event.ydata
+        for source, path in zip(sources, paths):
+            sx, sy = pos[source]
+            if (x - sx) ** 2 + (y - sy) ** 2 < 0.01:  # Check if click is near the source node
+                edges_in_path = list(zip(path[:-1], path[1:]))
+                nx.draw_networkx_edges(graph, pos, edgelist=edges_in_path, edge_color='green', width=2, ax=ax)
+                fig.canvas.draw_idle()
+                break
+
+    fig.canvas.mpl_connect('button_press_event', on_click)
     plt.show()
 
 def visualize_path_metrics(graph, path):
