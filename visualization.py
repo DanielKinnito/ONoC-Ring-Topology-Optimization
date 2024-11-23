@@ -60,7 +60,13 @@ def visualize_topology(graph, paths, sources, targets, partition_size):
 
 def visualize_path_metrics(graph, path):
     """Visualizes congestion and temperature metrics for the selected path."""
-    congestion = [graph[u][v]['utilization'] for u, v in zip(path[:-1], path[1:])]
+    congestion = []
+    for u, v in zip(path[:-1], path[1:]):
+        if graph.has_edge(u, v):
+            congestion.append(graph[u][v]['utilization'])
+        else:
+            congestion.append(0)  # Handle invalid edges
+
     temperature = [graph.nodes[node]['temperature'] for node in path]
     indices = range(len(path))
 

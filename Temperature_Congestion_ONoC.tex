@@ -1,0 +1,127 @@
+\documentclass[conference]{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{cite}
+
+\title{Temperature and Congestion-Aware Multi-cast Communication in Ring-Based Optical Network-on-Chip (ONoC)}
+
+\author{
+    \IEEEauthorblockN{Abubeker Yasmin Mustefa\IEEEauthorrefmark{1}, Daniel Mekonnen Ejeta\IEEEauthorrefmark{2}}
+    \IEEEauthorblockA{\IEEEauthorrefmark{1}Department of Electrical Engineering, University Name, City, Country\\
+    Email: moli614360@gmail.com}
+    \IEEEauthorblockA{\IEEEauthorrefmark{2}Department of Software Engineering, Addis Ababa Science and Technology University, Addis Ababa, Ethiopia\\
+    Email: mokonnendaniel@gmail.com}
+}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This paper addresses the critical challenges of temperature and congestion in ring-based Optical Network-on-Chip (ONoC) topologies. As demand for high-performance, energy-efficient interconnect systems grows, thermal management and congestion reduction have become essential for scalable and reliable multi-core processors. This study proposes a routing approach tailored for multi-cast communication, which utilizes a temperature-aware heuristic routing algorithm and congestion monitoring system, calibrated to respond dynamically to real-time network conditions. Experimental results demonstrate that this approach optimally balances temperature distribution and reduces congestion within the ONoC, thus enhancing network efficiency and reliability \cite{yang2020survey}. These findings have potential applications in high-performance computing and data centers where multi-cast communication is critical to system performance.
+\end{abstract}
+
+\section{Introduction}
+Optical Network-on-Chip (ONoC) architectures have emerged as promising alternatives to traditional electrical interconnects, offering superior bandwidth, reduced latency, and lower power consumption. However, as the integration density within ONoCs increases, so do the challenges associated with temperature and congestion management. Ring-based topologies, frequently favored for their simplicity and scalability, are particularly susceptible to these issues due to their closed-loop structure and constant traffic circulation, which can lead to localized hot-spots and congestion bottlenecks.
+
+Recent advances in temperature-aware and congestion-aware routing algorithms have attempted to address these issues. Temperature-aware strategies optimize routing based on thermal profiles, reducing the likelihood of thermal hot-spots that compromise system reliability. Concurrently, congestion-aware routing strategies are designed to manage network load dynamically, alleviating traffic buildup that can degrade performance. However, existing approaches often address these concerns independently, lacking a unified strategy for handling both temperature and congestion in multi-cast ONoC environments.
+
+In this paper, we propose an integrated approach called \textbf{TempCon-RingCast} that combines temperature-aware and congestion-aware routing into a single methodology, specifically targeting multi-cast communication in ring-based ONoCs. By dynamically selecting paths based on real-time thermal and congestion data, the proposed method aims to enhance network performance and reliability. This approach is anticipated to benefit applications requiring efficient and stable data routing in ONoC environments, such as high-performance computing systems and data centers.
+
+\section{Proposed Methodology}
+
+\subsection{Initialization}
+The algorithm begins by identifying the source and destination nodes for each multi-cast session. Initial temperature and congestion levels are measured across all links. This baseline assessment enables the algorithm to track fluctuations in network conditions throughout the multi-cast process.
+
+\subsection{Temperature Measurement}
+Temperature at each node and along each link is monitored using resonant wavelength shifts observed in the micro-ring resonators (MRs) associated with each network node. The shift in resonant wavelength (\(\Delta \lambda\)) serves as an indicator of temperature changes, which are calculated using the thermos-optic coefficient specific to the ONoC’s material composition (e.g., silicon with a coefficient of \(1.86 \times 10^{-4} \, \mathrm{K}^{-1}\)).
+
+The calculation involves the following steps:
+\begin{itemize}
+    \item \textbf{Wavelength Shift Measurement:} The resonant wavelength shift (\(\Delta \lambda\)) is measured through optical monitoring systems.
+    \item \textbf{Temperature Calculation:} Using the formula
+    \[
+    T = T_0 + \frac{\Delta \lambda}{\lambda_0 \cdot \alpha},
+    \]
+    where \(T_0\) is room temperature, the system calculates the real-time temperature for each node.
+\end{itemize}
+
+\subsection{Congestion Measurement}
+Congestion is quantified by assessing link utilization and traffic load at each node. Specifically, the system monitors the packet queue length and calculates link utilization as a percentage of the link’s total capacity. Nodes approaching or exceeding 70\% utilization are flagged as potential bottlenecks.
+
+The congestion metric for each link is calculated using the following:
+\begin{itemize}
+    \item \textbf{Congestion Level (C):} Represented as the ratio of current traffic load to link capacity.
+    \item \textbf{Total Congestion (C\textsubscript{path}):} Summed across all links within a selected path.
+\end{itemize}
+
+This metric enables the algorithm to prioritize paths with lower congestion, thus reducing packet delays and improving multi-cast efficiency within the ONoC.
+
+\subsection{Path Partitioning}
+To manage temperature and congestion efficiently within the ring-based ONoC, the proposed method incorporates a path partitioning approach. By dividing the network into smaller, manageable partitions, each representing a subset of nodes and links, the system can achieve more granular control over temperature and congestion levels. This partitioned structure not only improves the accuracy of congestion and temperature measurements but also simplifies routing decisions by enabling localized adjustments within each partition \cite{chu2019partitioning}.
+
+\subsubsection{Partition Structure and Purpose}
+Each partition is designed to contain approximately 5\% of the total nodes in the network, providing a balance between detailed monitoring and computational efficiency. For instance, in a network with 200 nodes, each partition would comprise 10 nodes. This layout allows for close monitoring of both thermal conditions and congestion in specific regions, enabling localized responses to emerging hot-spots or congestion points \cite{liu2019wavelength}. By isolating regions in this manner, the routing system can distribute traffic more evenly across the network, thereby reducing the likelihood of widespread congestion or thermal buildup.
+
+\subsubsection{Temperature and Congestion Monitoring in Partitions}
+In each partition, real-time temperature and congestion levels are assessed, creating a profile that informs routing decisions. This involves two main calculations:
+
+\paragraph{Formula for Average Temperature:}
+\[
+T_{\text{avg}} = \frac{\sum_{i=1}^{n} T_{\text{node}_i}}{n}
+\]
+where $T_{\text{node}_i}$ represents the temperature of each node in the partition and $n$ is the total number of nodes in that partition.
+
+\paragraph{Partition Temperature Score:}
+The temperature score for each partition, $T_{\text{partition}}$, is calculated by summing the temperatures of all nodes. This score provides a quick reference for the routing system to determine if alternative paths should be considered.
+
+\subsection{Bidirectional Path Selection}
+The algorithm performs a simultaneous bidirectional search, evaluating paths in both clockwise and counterclockwise directions. By allowing multi-cast packets to be routed along both paths, the algorithm achieves a balanced load distribution, which is crucial for preventing congestion within the ring topology.
+
+For each possible path, the combined metric of temperature and congestion is computed as follows:
+\[
+S_{\text{path}} = w_c \cdot C_{\text{path}} + w_t \cdot T_{\text{path}}
+\]
+where $w_c$ and $w_t$ are the weights assigned to congestion and temperature, respectively, tailored to network priorities.
+
+The path with the lowest combined score is selected, ensuring an optimal balance between latency, congestion, and thermal efficiency.
+
+\section{Simulation Setup and Parameters}
+The proposed routing method was evaluated using a simulation environment that models a ring-based ONoC under varying traffic and temperature conditions. The simulation parameters are as follows:
+\begin{itemize}
+    \item \textbf{Number of Nodes:} 100
+    \item \textbf{Partition Size:} 10
+    \item \textbf{Weight for Congestion (w\textsubscript{c}):} 0.6
+    \item \textbf{Weight for Temperature (w\textsubscript{t}):} 0.4
+    \item \textbf{Source Nodes:} [4, 37]
+    \item \textbf{Target Nodes:} [5, 16]
+\end{itemize}
+
+\section{Results}
+Simulation results show that the temperature and congestion-aware routing method achieves a significant improvement in network performance. The following figures illustrate the key findings:
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{ring_topology.png}
+    \caption{Ring Topology with Temperature and Best Paths Highlighted}
+    \label{fig:ring_topology}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{path_metrics.png}
+    \caption{Path Metrics: Congestion and Temperature}
+    \label{fig:path_metrics}
+\end{figure}
+
+\section{Conclusion and Future Work}
+This study presents a comprehensive routing approach for multi-cast communication in ring-based ONoCs, addressing both temperature and congestion concerns. By incorporating real-time monitoring and adaptive path selection, the algorithm effectively balances thermal distribution and reduces network congestion. Future work will explore refining the temperature and congestion thresholds, potentially extending this methodology to other ONoC topologies to enhance scalability and performance in larger systems.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

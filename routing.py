@@ -42,9 +42,18 @@ def multicast_search(graph, sources, targets, wc, wt):
     best_paths = []
     best_scores = []
 
-    for source, target in zip(sources, targets):
-        best_path, best_score = bidirectional_search(graph, source, target, wc, wt)
-        best_paths.append(best_path)
-        best_scores.append(best_score)
+    for source in sources:
+        combined_path = []
+        combined_score = 0
+        visited_nodes = set()
+        for target in targets:
+            path, score = bidirectional_search(graph, source, target, wc, wt)
+            for node in path:
+                if node not in visited_nodes:
+                    combined_path.append(node)
+                    visited_nodes.add(node)
+            combined_score += score
+        best_paths.append(combined_path)
+        best_scores.append(combined_score)
 
     return best_paths, best_scores
