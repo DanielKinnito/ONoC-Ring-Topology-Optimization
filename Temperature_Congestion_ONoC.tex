@@ -93,8 +93,8 @@ The path with the lowest combined score is selected, ensuring an optimal balance
 \section{Simulation Setup and Parameters}
 The proposed routing method was evaluated using a simulation environment that models a ring-based ONoC under varying traffic and temperature conditions. The simulation parameters are as follows:
 \begin{itemize}
-    \item \textbf{Number of Nodes:} 100
-    \item \textbf{Partition Size:} 10
+    \item \textbf{Number of Nodes:} 40
+    \item \textbf{Partition Size:} 5% of total nodes
     \item \textbf{Weight for Congestion (w\textsubscript{c}):} 0.6
     \item \textbf{Weight for Temperature (w\textsubscript{t}):} 0.4
     \item \textbf{Source Nodes:} [4, 37]
@@ -120,6 +120,10 @@ Simulation results show that the temperature and congestion-aware routing method
 
 \section{Conclusion and Future Work}
 This study presents a comprehensive routing approach for multi-cast communication in ring-based ONoCs, addressing both temperature and congestion concerns. By incorporating real-time monitoring and adaptive path selection, the algorithm effectively balances thermal distribution and reduces network congestion. Future work will explore refining the temperature and congestion thresholds, potentially extending this methodology to other ONoC topologies to enhance scalability and performance in larger systems.
+
+\appendices
+\section{Supplementary Materials}
+The source code for the TempCon-RingCast algorithm and additional supplementary materials can be found at the following GitHub repository: \href{https://github.com/DanielKinnito/ONoC-Ring-Topology-Optimization}{https://github.com/DanielKinnito/ONoC-Ring-Topology-Optimization}.
 
 \bibliographystyle{IEEEtran}
 \bibliography{references}
