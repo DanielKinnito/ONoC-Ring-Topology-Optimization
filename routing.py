@@ -1,5 +1,6 @@
 from heapq import heappop, heappush
 from metrics import calculate_path_score
+import networkx as nx
 
 def find_best_path(graph, source, target, wc, wt):
     """Finds the best path using a weighted metric."""
@@ -55,5 +56,19 @@ def multicast_search(graph, sources, targets, wc, wt):
             combined_score += score
         best_paths.append(combined_path)
         best_scores.append(combined_score)
+
+    return best_paths, best_scores
+
+def shortest_path_first(graph, sources, targets):
+    """Finds the shortest paths from sources to targets using the Shortest Path First algorithm."""
+    best_paths = []
+    best_scores = []
+
+    for source in sources:
+        for target in targets:
+            path = nx.shortest_path(graph, source=source, target=target, weight='weight')
+            score = nx.shortest_path_length(graph, source=source, target=target, weight='weight')
+            best_paths.append(path)
+            best_scores.append(score)
 
     return best_paths, best_scores
