@@ -51,6 +51,6 @@ def main(num_nodes, partition_size, wc, wt, sources, targets):
         print(f"Summary saved as path_metrics_summary_spf_{i+1}.csv")
 
 if __name__ == "__main__":
-    sources = [4, 37]  # Example sources
-    targets = [5, 16]  # Example targets
-    main(100, 10, 0.6, 0.4, sources, targets)
+    sources = [0, 10]  # Example sources
+    targets = [5, 15]  # Example targets
+    main(20, 5, 0.7, 0.3, sources, targets)

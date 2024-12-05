@@ -66,11 +66,11 @@ def visualize_topology(graph, paths_tempcon, paths_spf, sources, targets, partit
                 tx, ty = pos[path_tempcon[-1]]
                 ax.annotate('TempCon-RingCast', xy=(tx, ty), xytext=(tx + 0.1, ty + 0.1), color='green', fontsize=12, fontweight='bold')
 
-                # Draw the path for Shortest Path First
+                # Draw the path for Shortest Path First in the opposite direction
                 for u, v in zip(path_spf[:-1], path_spf[1:]):
                     ux, uy = pos[u]
                     vx, vy = pos[v]
-                    arrow = FancyArrowPatch((ux, uy), (vx, vy), connectionstyle="arc3,rad=0.3", color='purple', arrowstyle='-|>', mutation_scale=15)
+                    arrow = FancyArrowPatch((ux, uy), (vx, vy), connectionstyle="arc3,rad=-0.3", color='purple', arrowstyle='-|>', mutation_scale=15)
                     ax.add_patch(arrow)
                 # Label the Shortest Path First path
                 tx, ty = pos[path_spf[-1]]

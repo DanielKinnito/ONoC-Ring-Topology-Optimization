@@ -47,28 +47,72 @@ def multicast_search(graph, sources, targets, wc, wt):
         combined_path = []
         combined_score = 0
         visited_nodes = set()
-        for target in targets:
-            path, score = bidirectional_search(graph, source, target, wc, wt)
-            for node in path:
-                if node not in visited_nodes:
-                    combined_path.append(node)
-                    visited_nodes.add(node)
-            combined_score += score
+        current_node = source
+        remaining_targets = targets.copy()
+
+        while remaining_targets:
+            best_path = None
+            best_score = float('inf')
+            next_target = None
+
+            for target in remaining_targets:
+                path, score = bidirectional_search(graph, current_node, target, wc, wt)
+                if score < best_score:
+                    best_path = path
+                    best_score = score
+                    next_target = target
+
+            if best_path:
+                for node in best_path:
+                    if node not in visited_nodes:
+                        combined_path.append(node)
+                        visited_nodes.add(node)
+                combined_score += best_score
+                current_node = next_target
+                remaining_targets.remove(next_target)
+
         best_paths.append(combined_path)
         best_scores.append(combined_score)
 
     return best_paths, best_scores
 
 def shortest_path_first(graph, sources, targets):
-    """Finds the shortest paths from sources to targets using the Shortest Path First algorithm."""
+    """Finds the shortest paths from sources to all targets using the Shortest Path First algorithm."""
     best_paths = []
     best_scores = []
 
     for source in sources:
-        for target in targets:
-            path = nx.shortest_path(graph, source=source, target=target, weight='weight')
-            score = nx.shortest_path_length(graph, source=source, target=target, weight='weight')
-            best_paths.append(path)
-            best_scores.append(score)
+        combined_path = []
+        visited_nodes = set()
+        current_node = source
+        total_score = 0
+
+        while targets:
+            shortest_path = None
+            shortest_length = float('inf')
+            next_target = None
+
+            for target in targets:
+                try:
+                    path = nx.shortest_path(graph, source=current_node, target=target, weight='weight')
+                    length = nx.shortest_path_length(graph, source=current_node, target=target, weight='weight')
+                    if length < shortest_length:
+                        shortest_path = path
+                        shortest_length = length
+                        next_target = target
+                except nx.NetworkXNoPath:
+                    continue
+
+            if shortest_path:
+                for node in shortest_path:
+                    if node not in visited_nodes:
+                        combined_path.append(node)
+                        visited_nodes.add(node)
+                total_score += shortest_length
+                current_node = next_target
+                targets.remove(next_target)
+
+        best_paths.append(combined_path)
+        best_scores.append(total_score)
 
     return best_paths, best_scores
