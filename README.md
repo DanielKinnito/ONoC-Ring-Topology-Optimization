@@ -35,7 +35,7 @@ Using the GUI
 1.Run the gui.py script:
 
 ```python
-python gui.py
+python -m src.gui.app
 ```
 
 2.Enter the required parameters in the GUI:
@@ -62,43 +62,77 @@ if __name__ == "__main__":
 2.Run the main.py script:
 
 ```python
-python main.py
+python -m src.core.main
 ```
 
-## Visualization
+## Simulation Results
 
-The visualization includes
-    - The ring topology with nodes colored based on their temperature.
-    - The best paths highlighted in red.
-    - Source nodes highlighted in green and target nodes in blue.
-    - Interactive zoom functionality.
-    - Click functionality to highlight the best path from a selected source node in green.
+The simulation generates comprehensive metrics and visualizations demonstrating the performance of both TempCon-RingCast and Shortest Path First (SPF) algorithms. Results are saved in the following locations:
 
-## Generating Summary Tables
+### Metrics (CSV files)
+- `results/metrics/`: Regular simulation results
+  - `node_metrics.csv`: Per-node temperature and congestion data
+  - `partition_metrics.csv`: Partition-level aggregated metrics
+  - `tempcon_metrics.csv`: TempCon-RingCast path metrics
+  - `spf_metrics.csv`: Shortest Path First path metrics
 
-The simulation generates summary tables of path metrics (temperature and congestion) and saves them to CSV files. The summary tables include:
-    - Node index
-    - Temperature (°C)
-    - Congestion (%)
-    - Weighted Score
+- `results/test/metrics/`: Test scenario results
+  - `high_congestion_scenario_*.csv`: Metrics for high congestion test
+  - `hotspot_scenario_*.csv`: Metrics for hotspot test
+
+### Visualizations
+- `results/plots/`: Regular simulation visualizations
+- `results/test/plots/`: Test scenario visualizations
+
+Each visualization includes:
+- Ring topology with temperature-based node coloring
+- Path comparisons between TempCon-RingCast (red) and SPF (blue)
+- Source nodes (green) and target nodes (blue)
+- Interactive features for detailed path analysis
+
+### Performance Metrics
+The simulation tracks and compares:
+- Path temperature distribution
+- Congestion levels
+- Path lengths
+- Weighted performance scores
+- Partition-level metrics
+- Node-level metrics
+
+## Running Tests
+
+To run the test scenarios:
+
+```bash
+python -m src.test.run_tests
+```
+
+This will execute both high-congestion and hotspot scenarios, generating comprehensive metrics and visualizations for analysis.
 
 ## Project Structure
 
 ONoC-Ring-Topology-Optimization/
-├── __pycache__/
-├── .gitignore
-├── [gui.py](http://_vscodecontentref_/2)
-├── LICENSE
-├── [main.py](http://_vscodecontentref_/3)
-├── [metrics.py](http://_vscodecontentref_/4)
-├── [path_metrics_summary_1.csv](http://_vscodecontentref_/5)
-├── [path_metrics_summary_2.csv](http://_vscodecontentref_/6)
-├── [path_metrics_summary.csv](http://_vscodecontentref_/7)
-├── [README.md](http://_vscodecontentref_/8)
-├── [requirements.txt](http://_vscodecontentref_/9)
-├── [routing.py](http://_vscodecontentref_/10)
-├── [topology.py](http://_vscodecontentref_/11)
-└── [visualization.py](http://_vscodecontentref_/12)
+├── src/
+│   ├── core/
+│   │   ├── __init__.py
+│   │   ├── topology.py
+│   │   ├── routing.py
+│   │   ├── main.py
+|   |   └── metrics.py
+│   ├── visualization/
+│   │   ├── __init__.py
+│   │   └── visualizer.py
+│   └── gui/
+│       ├── __init__.py
+│       └── app.py
+├── results/
+│   ├── metrics/
+|   ├── test/
+|   |   ├── metrics/
+|   │   └── plots/
+│   └── plots/
+└── docs/
+    └── latex/
 
 ## License
 
