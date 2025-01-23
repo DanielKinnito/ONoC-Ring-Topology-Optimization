@@ -31,8 +31,11 @@ import networkx as nx
 from IPython.display import Image, display
 
 # Set plotting style
-plt.style.use('seaborn')
-sns.set_context("paper")
+plt.style.use('default')  # Use default style
+sns.set_theme(style="whitegrid")  # Set seaborn theme
+plt.rcParams['figure.figsize'] = [10, 6]  # Set default figure size
+plt.rcParams['figure.dpi'] = 100  # Set default DPI
+plt.rcParams['font.size'] = 12  # Set default font size
 
 === SECTION 1: INTRODUCTION (MARKDOWN CELL) ===
 # 1. Introduction
