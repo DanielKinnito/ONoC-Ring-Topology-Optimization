@@ -15,8 +15,19 @@ import time
 import os
 
 # Set style for better-looking plots
-plt.style.use('seaborn')
-sns.set_context("talk")
+plt.style.use('default')  # Use default style first
+sns.set_theme(style="whitegrid")  # Then apply seaborn styling
+plt.rcParams.update({
+    'figure.figsize': [10, 6],
+    'axes.grid': True,
+    'grid.alpha': 0.3,
+    'lines.linewidth': 2,
+    'font.size': 12,
+    'axes.labelsize': 12,
+    'axes.titlesize': 14,
+    'xtick.labelsize': 10,
+    'ytick.labelsize': 10
+})
 
 # Set random seed for reproducibility
 np.random.seed(42)
@@ -89,10 +100,11 @@ class RoutingAlgorithm:
     
     @staticmethod
     def tempcon_route(network: RingNetwork, source: int, target: int,
-                     w_t: float = 0.3, w_c: float = 0.7) -> List[int]:
-        """TempCon-RingCast routing"""
-        # Get clockwise and counterclockwise paths
+                     w_t: float = 0.4, w_c: float = 0.6) -> List[int]:
+        """TempCon-RingCast routing with enhanced path selection"""
         paths = []
+        
+        # Get all possible paths between source and target
         # Clockwise
         current = source
         path1 = [current]
@@ -109,14 +121,38 @@ class RoutingAlgorithm:
             path2.append(current)
         paths.append(path2)
         
-        # Calculate metrics for each path
+        # Add intermediate paths by considering partition-aware routing
+        mid_points = [(source + network.num_nodes//4) % network.num_nodes,
+                     (source + network.num_nodes//2) % network.num_nodes,
+                     (source + 3*network.num_nodes//4) % network.num_nodes]
+        
+        for mid in mid_points:
+            path_via_mid = (nx.shortest_path(network.G, source, mid) + 
+                          nx.shortest_path(network.G, mid, target)[1:])
+            paths.append(path_via_mid)
+        
+        # Calculate metrics for each path with enhanced scoring
         best_score = float('inf')
         best_path = None
         
         for path in paths:
-            temp_score = np.mean([network.node_states[n].temperature for n in path])
-            cong_score = np.mean([network.node_states[n].congestion for n in path])
-            score = w_t * temp_score + w_c * cong_score
+            # Temperature metric with hotspot penalty
+            temps = [network.node_states[n].temperature for n in path]
+            max_temp = max(temps)
+            avg_temp = np.mean(temps)
+            temp_score = avg_temp + (0.5 * max_temp if max_temp > 80 else 0)  # Penalty for high temps
+            
+            # Congestion metric with bottleneck penalty
+            congs = [network.node_states[n].congestion for n in path]
+            max_cong = max(congs)
+            avg_cong = np.mean(congs)
+            cong_score = avg_cong + (0.5 * max_cong if max_cong > 70 else 0)  # Penalty for high congestion
+            
+            # Path length penalty (mild penalty for much longer paths)
+            length_penalty = 0.1 * (len(path) / (network.num_nodes/2)) if len(path) > network.num_nodes/2 else 0
+            
+            # Combined score with penalties
+            score = (w_t * temp_score + w_c * cong_score) * (1 + length_penalty)
             
             if score < best_score:
                 best_score = score
@@ -129,54 +165,101 @@ class RoutingAlgorithm:
 
 # Cell 8 - Code
 def run_high_congestion_scenario():
-    """Simulate high congestion scenario"""
-    network_spf = RingNetwork(20, 4)
-    network_tempcon = RingNetwork(20, 4)
+    """Simulate high congestion scenario with more realistic traffic patterns"""
+    network_spf = RingNetwork(50, 5)
+    network_tempcon = RingNetwork(50, 5)
+    
+    # Create initial background traffic
+    background_pairs = [(i, (i + 25) % 50) for i in range(0, 50, 5)]
+    for src, dst in background_pairs:
+        for net in [network_spf, network_tempcon]:
+            path = RoutingAlgorithm.spf_route(net, src, dst)
+            for node in path:
+                net.node_states[node].congestion += 0.4
+                net.node_states[node].temperature += 2.0
     
     # Generate high traffic between multiple pairs
-    traffic_pairs = [(0, 10), (5, 15), (2, 12), (7, 17)]
+    traffic_pairs = [
+        (0, 25), (25, 0),    # Heavy cross-network traffic
+        (10, 35), (35, 10),  # Additional cross-network paths
+        (5, 30), (30, 5),    # More distributed load
+        (15, 40), (40, 15),  # Creating potential hotspots
+        (20, 45), (45, 20),  # Additional load paths
+        (7, 32), (32, 7),    # Extra traffic pairs
+        (12, 37), (37, 12),  # More concurrent flows
+        (3, 28), (28, 3)     # Additional paths
+    ]
     
-    for src, dst in traffic_pairs:
-        # SPF routing
-        path = RoutingAlgorithm.spf_route(network_spf, src, dst)
-        for node in path:
-            network_spf.node_states[node].congestion += 0.8
-            network_spf.node_states[node].temperature += 5.0
-        
-        # TempCon routing
-        path = RoutingAlgorithm.tempcon_route(network_tempcon, src, dst)
-        for node in path:
-            network_tempcon.node_states[node].congestion += 0.8
-            network_tempcon.node_states[node].temperature += 5.0
+    # Simulate bursty traffic
+    for _ in range(3):  # Multiple rounds of traffic
+        for src, dst in traffic_pairs:
+            # SPF routing - accumulates in shortest paths
+            path = RoutingAlgorithm.spf_route(network_spf, src, dst)
+            for node in path:
+                network_spf.node_states[node].congestion += 1.5
+                network_spf.node_states[node].temperature += 10.0
+            
+            # TempCon routing - distributes load
+            path = RoutingAlgorithm.tempcon_route(network_tempcon, src, dst)
+            for node in path:
+                network_tempcon.node_states[node].congestion += 1.5
+                network_tempcon.node_states[node].temperature += 10.0
     
     return network_spf, network_tempcon
 
 def run_hotspot_scenario():
-    """Simulate hotspot scenario"""
-    network_spf = RingNetwork(20, 4)
-    network_tempcon = RingNetwork(20, 4)
+    """Simulate hotspot scenario with more realistic thermal patterns"""
+    network_spf = RingNetwork(50, 5)
+    network_tempcon = RingNetwork(50, 5)
     
-    # Create hotspots
-    hotspots = [5, 15]
+    # Create multiple hotspot regions with thermal spread
+    hotspots = [10, 20, 30, 40]
     for hot in hotspots:
-        network_spf.node_states[hot].temperature = 90.0
-        network_tempcon.node_states[hot].temperature = 90.0
-    
-    # Generate traffic through hotspots
-    traffic_pairs = [(0, 10), (10, 0), (5, 15), (15, 5)]
-    
-    for src, dst in traffic_pairs:
-        # SPF routing
-        path = RoutingAlgorithm.spf_route(network_spf, src, dst)
-        for node in path:
-            network_spf.node_states[node].congestion += 0.6
-            network_spf.node_states[node].temperature += 3.0
+        # Create primary hotspots
+        network_spf.node_states[hot].temperature = 95.0
+        network_tempcon.node_states[hot].temperature = 95.0
         
-        # TempCon routing
-        path = RoutingAlgorithm.tempcon_route(network_tempcon, src, dst)
-        for node in path:
-            network_tempcon.node_states[node].congestion += 0.6
-            network_tempcon.node_states[node].temperature += 3.0
+        # Create thermal spread (more realistic thermal distribution)
+        for dist in range(1, 4):  # Heat spreads to 3 nodes in each direction
+            for neighbor in [(hot-dist)%50, (hot+dist)%50]:
+                temp = 95.0 - (dist * 10)  # Temperature decreases with distance
+                network_spf.node_states[neighbor].temperature = temp
+                network_tempcon.node_states[neighbor].temperature = temp
+    
+    # Generate traffic through and around hotspots
+    traffic_pairs = [
+        (5, 25), (25, 5),     # Through first hotspot region
+        (15, 35), (35, 15),   # Through second hotspot region
+        (0, 30), (30, 0),     # Cross-network traffic
+        (45, 20), (20, 45),   # Additional stress paths
+        (10, 40), (40, 10),   # Direct hotspot-to-hotspot traffic
+        (8, 28), (28, 8),     # Near-hotspot traffic
+        (18, 38), (38, 18),   # Additional thermal stress
+        (2, 32), (32, 2)      # Background traffic
+    ]
+    
+    # Multiple rounds of traffic to simulate continuous operation
+    for _ in range(3):
+        for src, dst in traffic_pairs:
+            # SPF routing
+            path = RoutingAlgorithm.spf_route(network_spf, src, dst)
+            for node in path:
+                network_spf.node_states[node].congestion += 1.0
+                # Higher temperature increase in hot regions
+                base_temp_increase = 6.0
+                if any(abs(node - hot) <= 3 for hot in hotspots):
+                    base_temp_increase *= 1.5
+                network_spf.node_states[node].temperature += base_temp_increase
+            
+            # TempCon routing with temperature-aware path selection
+            path = RoutingAlgorithm.tempcon_route(network_tempcon, src, dst,
+                                                w_t=0.6, w_c=0.4)  # Prioritize temperature in hotspot scenario
+            for node in path:
+                network_tempcon.node_states[node].congestion += 1.0
+                base_temp_increase = 6.0
+                if any(abs(node - hot) <= 3 for hot in hotspots):
+                    base_temp_increase *= 1.5
+                network_tempcon.node_states[node].temperature += base_temp_increase
     
     return network_spf, network_tempcon
 
@@ -185,43 +268,69 @@ def run_hotspot_scenario():
 
 # Cell 10 - Code
 def plot_metrics_comparison(spf_net: RingNetwork, tempcon_net: RingNetwork, title: str):
-    """Generate comparison plot for temperature and congestion metrics"""
+    """Generate comparison plot for temperature and congestion metrics
+    This generates Figure 1 in the paper: Comparative analysis showing temperature
+    and congestion distributions between SPF and TempCon-RingCast approaches.
+    Used in Section IV.A (Performance Results)."""
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
     
-    # Temperature comparison
+    # Temperature comparison with violin plots
     spf_temps = [spf_net.node_states[n].temperature for n in range(spf_net.num_nodes)]
     tempcon_temps = [tempcon_net.node_states[n].temperature for n in range(tempcon_net.num_nodes)]
     
-    bp1 = ax1.boxplot([spf_temps, tempcon_temps], labels=['SPF', 'TempCon'])
-    ax1.set_title('Temperature Distribution')
+    # Calculate improvement percentages
+    temp_improvement = ((np.mean(spf_temps) - np.mean(tempcon_temps)) / np.mean(spf_temps)) * 100
+    max_temp_improvement = ((np.max(spf_temps) - np.max(tempcon_temps)) / np.max(spf_temps)) * 100
+    
+    # Violin plots for temperature
+    vp1 = ax1.violinplot([spf_temps, tempcon_temps], showmeans=True, showmedians=True)
+    ax1.set_xticks([1, 2])
+    ax1.set_xticklabels(['SPF', 'TempCon'])
+    ax1.set_title(f'Temperature Distribution\n(Mean reduction: {temp_improvement:.1f}%)')
     ax1.set_ylabel('Temperature (°C)')
     
-    # Add mean values as text
-    for i, temps in enumerate([spf_temps, tempcon_temps], 1):
-        mean_val = np.mean(temps)
-        ax1.text(i, min(temps), f'Mean: {mean_val:.1f}°C', 
-                horizontalalignment='center', verticalalignment='top')
+    # Add mean and max annotations
+    ax1.text(0.05, 0.95, f'Max SPF: {np.max(spf_temps):.1f}°C\nMax TempCon: {np.max(tempcon_temps):.1f}°C', 
+             transform=ax1.transAxes, verticalalignment='top')
     
     # Congestion comparison
     spf_cong = [spf_net.node_states[n].congestion for n in range(spf_net.num_nodes)]
     tempcon_cong = [tempcon_net.node_states[n].congestion for n in range(tempcon_net.num_nodes)]
     
-    bp2 = ax2.boxplot([spf_cong, tempcon_cong], labels=['SPF', 'TempCon'])
-    ax2.set_title('Congestion Distribution')
+    # Calculate congestion improvement
+    cong_improvement = ((np.mean(spf_cong) - np.mean(tempcon_cong)) / np.mean(spf_cong)) * 100
+    
+    # Violin plots for congestion
+    vp2 = ax2.violinplot([spf_cong, tempcon_cong], showmeans=True, showmedians=True)
+    ax2.set_xticks([1, 2])
+    ax2.set_xticklabels(['SPF', 'TempCon'])
+    ax2.set_title(f'Congestion Distribution\n(Mean reduction: {cong_improvement:.1f}%)')
     ax2.set_ylabel('Congestion Level (%)')
     
-    # Add mean values as text
-    for i, cong in enumerate([spf_cong, tempcon_cong], 1):
-        mean_val = np.mean(cong)
-        ax2.text(i, min(cong), f'Mean: {mean_val:.1f}%', 
-                horizontalalignment='center', verticalalignment='top')
+    # Style violin plots
+    for vp in [vp1, vp2]:
+        for pc in vp['bodies']:
+            pc.set_facecolor('#D43F3A')
+            pc.set_alpha(0.3)
+        vp['cmeans'].set_color('black')
+        vp['cmedians'].set_color('blue')
     
-    plt.suptitle(title)
+    plt.suptitle(title, fontsize=14, y=1.05)
     plt.tight_layout()
     plt.show()
+    
+    # Return improvement metrics for updating the paper
+    return {
+        'temp_improvement': temp_improvement,
+        'max_temp_improvement': max_temp_improvement,
+        'cong_improvement': cong_improvement
+    }
 
 def plot_partition_analysis(network: RingNetwork, title: str):
-    """Generate partition analysis visualization"""
+    """Generate partition analysis visualization
+    This generates Figure 2 in the paper: Partition-based analysis showing temperature
+    and congestion distributions across network partitions.
+    Used in Section IV.B (Network Partition Analysis)."""
     metrics = network.get_partition_metrics()
     
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
@@ -267,43 +376,73 @@ def plot_scalability_analysis(sizes: List[int]):
         network_spf = RingNetwork(size, size//5)
         network_tempcon = RingNetwork(size, size//5)
         
-        # Simulate some traffic
+        # Simulate traffic patterns similar to high congestion scenario
+        background_pairs = [(i, (i + size//2) % size) for i in range(0, size, size//10)]
+        traffic_pairs = []
         for i in range(size//4):
-            src = np.random.randint(0, size)
+            src = i
             dst = (src + size//2) % size
+            traffic_pairs.append((src, dst))
+        
+        # Process background traffic
+        for src, dst in background_pairs:
+            # SPF routing
+            path = RoutingAlgorithm.spf_route(network_spf, src, dst)
+            for node in path:
+                network_spf.node_states[node].congestion += 0.4
+                network_spf.node_states[node].temperature += 2.0
             
+            # TempCon routing
+            path = RoutingAlgorithm.tempcon_route(network_tempcon, src, dst)
+            for node in path:
+                network_tempcon.node_states[node].congestion += 0.4
+                network_tempcon.node_states[node].temperature += 2.0
+        
+        # Process main traffic
+        for src, dst in traffic_pairs:
+            # SPF routing
+            path = RoutingAlgorithm.spf_route(network_spf, src, dst)
+            for node in path:
+                network_spf.node_states[node].congestion += 1.0
+                network_spf.node_states[node].temperature += 6.0
+            
+            # TempCon routing
             t0 = time.time()
             path = RoutingAlgorithm.tempcon_route(network_tempcon, src, dst)
             comp_time.append(time.time() - t0)
-            
-            # Calculate reductions
-            spf_temp = np.mean([network_spf.node_states[n].temperature for n in range(size)])
-            tempcon_temp = np.mean([network_tempcon.node_states[n].temperature for n in range(size)])
-            temp_reduction.append((spf_temp - tempcon_temp) / spf_temp * 100)
-            
-            spf_cong = np.mean([network_spf.node_states[n].congestion for n in range(size)])
-            tempcon_cong = np.mean([network_tempcon.node_states[n].congestion for n in range(size)])
-            cong_reduction.append((spf_cong - tempcon_cong) / spf_cong * 100)
+            for node in path:
+                network_tempcon.node_states[node].congestion += 1.0
+                network_tempcon.node_states[node].temperature += 6.0
+        
+        # Calculate metrics
+        spf_temp = np.mean([network_spf.node_states[n].temperature for n in range(size)])
+        tempcon_temp = np.mean([network_tempcon.node_states[n].temperature for n in range(size)])
+        temp_reduction.append((spf_temp - tempcon_temp) / spf_temp * 100)
+        
+        spf_cong = np.mean([network_spf.node_states[n].congestion for n in range(size)])
+        tempcon_cong = np.mean([network_tempcon.node_states[n].congestion for n in range(size)])
+        cong_reduction.append((spf_cong - tempcon_cong) / spf_cong * 100)
     
+    # Create figure
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
     
-    # Plot with markers and grid
-    ax1.plot(sizes, np.mean(np.array(temp_reduction).reshape(len(sizes), -1), axis=1), 
-            'o-', linewidth=2, markersize=8)
+    # Temperature reduction plot
+    ax1.plot(sizes, temp_reduction, 'o-', linewidth=2, markersize=8)
     ax1.set_title('Temperature Reduction')
     ax1.set_xlabel('Network Size')
     ax1.set_ylabel('Reduction (%)')
     ax1.grid(True)
     
-    ax2.plot(sizes, np.mean(np.array(cong_reduction).reshape(len(sizes), -1), axis=1),
-            'o-', linewidth=2, markersize=8)
+    # Congestion reduction plot
+    ax2.plot(sizes, cong_reduction, 'o-', linewidth=2, markersize=8)
     ax2.set_title('Congestion Reduction')
     ax2.set_xlabel('Network Size')
     ax2.set_ylabel('Reduction (%)')
     ax2.grid(True)
     
-    ax3.plot(sizes, np.mean(np.array(comp_time).reshape(len(sizes), -1), axis=1),
-            'o-', linewidth=2, markersize=8)
+    # Computation time plot
+    mean_comp_times = [np.mean(comp_time[i:i+size//4]) for i in range(0, len(comp_time), size//4)]
+    ax3.plot(sizes, mean_comp_times, 'o-', linewidth=2, markersize=8)
     ax3.set_title('Computation Time')
     ax3.set_xlabel('Network Size')
     ax3.set_ylabel('Time (s)')
@@ -312,23 +451,61 @@ def plot_scalability_analysis(sizes: List[int]):
     plt.suptitle('Scalability Analysis')
     plt.tight_layout()
     plt.show()
+    
+    # Return metrics for paper update
+    return {
+        'avg_temp_reduction': np.mean(temp_reduction),
+        'avg_cong_reduction': np.mean(cong_reduction),
+        'max_temp_reduction': np.max(temp_reduction),
+        'max_cong_reduction': np.max(cong_reduction)
+    }
 
 # Cell 11 - Markdown
 ## Run Simulations and Generate Results
+"""
+The following code generates all figures used in the paper:
+1. metrics_comparison.png (Figure 1): Shows the comparative analysis between SPF and TempCon
+2. partition_analysis.png (Figure 2): Demonstrates the effectiveness of partition-based approach
+3. scalability.png (Figure 3): Illustrates performance scaling with network size
+
+Each figure is referenced in Section IV of the paper and demonstrates key aspects
+of the TempCon-RingCast algorithm's performance improvements.
+"""
 
 # Cell 12 - Code
-# Run high congestion scenario
-print("Running high congestion scenario...")
-spf_net, tempcon_net = run_high_congestion_scenario()
-plot_metrics_comparison(spf_net, tempcon_net, 'High Congestion Scenario Comparison')
+try:
+    # Run simulations with larger network
+    print("Running high congestion scenario...")
+    spf_net, tempcon_net = run_high_congestion_scenario()
+    high_cong_metrics = plot_metrics_comparison(spf_net, tempcon_net, 'High Congestion Scenario Comparison')
 
-print("\nRunning hotspot scenario...")
-spf_net, tempcon_net = run_hotspot_scenario()
-plot_metrics_comparison(spf_net, tempcon_net, 'Hotspot Scenario Comparison')
+    print("\nRunning hotspot scenario...")
+    spf_net, tempcon_net = run_hotspot_scenario()
+    hotspot_metrics = plot_metrics_comparison(spf_net, tempcon_net, 'Hotspot Scenario Comparison')
 
-print("\nGenerating partition analysis...")
-plot_partition_analysis(tempcon_net, 'Partition-based Performance Analysis')
+    print("\nGenerating partition analysis...")
+    plot_partition_analysis(tempcon_net, 'Partition-based Performance Analysis')
 
-print("\nGenerating scalability analysis...")
-network_sizes = [20, 50, 100]
-plot_scalability_analysis(network_sizes)
+    print("\nGenerating scalability analysis...")
+    network_sizes = [20, 50, 100, 200]  # Added larger network size
+    scalability_metrics = plot_scalability_analysis(network_sizes)
+
+    # Print summary of improvements
+    print("\nPerformance Improvements Summary:")
+    print(f"High Congestion Scenario:")
+    print(f"- Temperature reduction: {high_cong_metrics['temp_improvement']:.1f}%")
+    print(f"- Maximum temperature reduction: {high_cong_metrics['max_temp_improvement']:.1f}%")
+    print(f"- Congestion reduction: {high_cong_metrics['cong_improvement']:.1f}%")
+    print(f"\nHotspot Scenario:")
+    print(f"- Temperature reduction: {hotspot_metrics['temp_improvement']:.1f}%")
+    print(f"- Maximum temperature reduction: {hotspot_metrics['max_temp_improvement']:.1f}%")
+    print(f"- Congestion reduction: {hotspot_metrics['cong_improvement']:.1f}%")
+    print(f"\nScalability Analysis:")
+    print(f"- Average temperature reduction: {scalability_metrics['avg_temp_reduction']:.1f}%")
+    print(f"- Average congestion reduction: {scalability_metrics['avg_cong_reduction']:.1f}%")
+    print(f"- Maximum temperature reduction: {scalability_metrics['max_temp_reduction']:.1f}%")
+    print(f"- Maximum congestion reduction: {scalability_metrics['max_cong_reduction']:.1f}%")
+
+except Exception as e:
+    print(f"An error occurred: {str(e)}")
+    raise
