@@ -114,24 +114,24 @@ Two primary test scenarios were implemented to evaluate algorithm robustness und
 
 \begin{enumerate}
     \item \textbf{High Congestion Scenario:} This scenario simulated intense network activity with multiple concurrent data streams and bursty traffic patterns. The simulation included:
-    \begin{itemize}
+\begin{itemize}
         \item Background traffic across 10 node pairs to create baseline network load
         \item 16 concurrent high-intensity communication pairs
         \item Multiple rounds of bursty traffic to simulate real-world conditions
         \item Accumulated congestion effects in heavily used paths
-    \end{itemize}
-    
+\end{itemize}
+
     \item \textbf{Hotspot Scenario:} This scenario created multiple thermal hotspots with realistic heat distribution patterns:
-    \begin{itemize}
+\begin{itemize}
         \item Four primary hotspots (at nodes 10, 20, 30, and 40) with 95°C peak temperatures
         \item Gradual thermal spread extending to three nodes in each direction
         \item Temperature-dependent traffic effects, where hot regions experience amplified heating
         \item 16 traffic pairs routing through and around hotspot regions
-    \end{itemize}
+\end{itemize}
 \end{enumerate}
 
 \subsection{Performance Results}
-The evaluation results demonstrate substantial improvements in both thermal management and congestion control compared to the traditional Shortest Path First (SPF) approach. As shown in Figure \ref{fig:metrics_comparison}, which presents violin plots of the temperature and congestion distributions across all nodes, our approach achieves significant reductions in both metrics. The violin plots clearly illustrate the full distribution of values, with the width at each point representing the frequency of occurrence.
+The evaluation results demonstrate substantial improvements in both thermal management and congestion control compared to the traditional Shortest Path First (SPF) approach. As shown in Figure \ref{fig:high_congestion}, which presents violin plots of the temperature and congestion distributions across all nodes under high traffic conditions, our approach achieves significant reductions in both metrics. The violin plots clearly illustrate the full distribution of values, with the width at each point representing the frequency of occurrence.
 
 In the high congestion scenario, TempCon-RingCast achieved:
 \begin{itemize}
@@ -170,9 +170,16 @@ This study has demonstrated the effectiveness of TempCon-RingCast in optimizing 
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=\linewidth]{metrics_comparison.png}
-    \caption{Comparative Analysis of TempCon-RingCast vs SPF using violin plots. The plots show the full distribution of (a) temperature and (b) congestion metrics across all nodes, with means (black lines) and medians (blue lines) indicated. The width at each point represents the frequency of occurrence at that value.}
-    \label{fig:metrics_comparison}
+    \includegraphics[width=\linewidth]{high_congestion_scenario_comparison.png}
+    \caption{High Congestion Scenario: Comparative Analysis of TempCon-RingCast vs SPF using violin plots. The plots show the full distribution of (a) temperature and (b) congestion metrics across all nodes under high traffic conditions.}
+    \label{fig:high_congestion}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{hotspot_scenario_comparison.png}
+    \caption{Hotspot Scenario: Comparative Analysis of TempCon-RingCast vs SPF using violin plots. The plots demonstrate the algorithm's effectiveness in (a) thermal management around hotspots and (b) congestion control in thermally stressed regions.}
+    \label{fig:hotspot_scenario}
 \end{figure}
 
 \begin{figure}[h]
@@ -185,7 +192,7 @@ This study has demonstrated the effectiveness of TempCon-RingCast in optimizing 
 \begin{figure}[h]
     \centering
     \includegraphics[width=\linewidth]{scalability.png}
-    \caption{Scalability Analysis across network sizes (20-200 nodes) showing: (a) temperature reduction percentage, (b) congestion improvement percentage, and (c) computational overhead. The plots demonstrate the algorithm's consistent performance and efficient scaling.}
+    \caption{Scalability Analysis across network sizes (20-200 nodes) showing: (a) temperature reduction percentage, (b) congestion improvement percentage, and (c) computational overhead. The sub-quadratic growth in computation time demonstrates the algorithm's practical scalability.}
     \label{fig:scalability}
 \end{figure}
 

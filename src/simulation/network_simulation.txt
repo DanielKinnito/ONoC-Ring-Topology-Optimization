@@ -369,36 +369,21 @@ def plot_scalability_analysis(sizes: List[int]):
     """Generate scalability analysis visualization"""
     temp_reduction = []
     cong_reduction = []
-    comp_time = []
+    comp_times = []  # Store average computation time for each size
     
     for size in sizes:
-        # Run simulation for different network sizes
+        size_comp_times = []  # Store computation times for this size
         network_spf = RingNetwork(size, size//5)
         network_tempcon = RingNetwork(size, size//5)
         
-        # Simulate traffic patterns similar to high congestion scenario
-        background_pairs = [(i, (i + size//2) % size) for i in range(0, size, size//10)]
+        # Generate traffic pairs
         traffic_pairs = []
         for i in range(size//4):
             src = i
             dst = (src + size//2) % size
             traffic_pairs.append((src, dst))
         
-        # Process background traffic
-        for src, dst in background_pairs:
-            # SPF routing
-            path = RoutingAlgorithm.spf_route(network_spf, src, dst)
-            for node in path:
-                network_spf.node_states[node].congestion += 0.4
-                network_spf.node_states[node].temperature += 2.0
-            
-            # TempCon routing
-            path = RoutingAlgorithm.tempcon_route(network_tempcon, src, dst)
-            for node in path:
-                network_tempcon.node_states[node].congestion += 0.4
-                network_tempcon.node_states[node].temperature += 2.0
-        
-        # Process main traffic
+        # Process traffic
         for src, dst in traffic_pairs:
             # SPF routing
             path = RoutingAlgorithm.spf_route(network_spf, src, dst)
@@ -406,10 +391,10 @@ def plot_scalability_analysis(sizes: List[int]):
                 network_spf.node_states[node].congestion += 1.0
                 network_spf.node_states[node].temperature += 6.0
             
-            # TempCon routing
+            # TempCon routing - measure time
             t0 = time.time()
             path = RoutingAlgorithm.tempcon_route(network_tempcon, src, dst)
-            comp_time.append(time.time() - t0)
+            size_comp_times.append(time.time() - t0)
             for node in path:
                 network_tempcon.node_states[node].congestion += 1.0
                 network_tempcon.node_states[node].temperature += 6.0
@@ -422,6 +407,9 @@ def plot_scalability_analysis(sizes: List[int]):
         spf_cong = np.mean([network_spf.node_states[n].congestion for n in range(size)])
         tempcon_cong = np.mean([network_tempcon.node_states[n].congestion for n in range(size)])
         cong_reduction.append((spf_cong - tempcon_cong) / spf_cong * 100)
+        
+        # Store average computation time for this size
+        comp_times.append(np.mean(size_comp_times))
     
     # Create figure
     fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
@@ -441,9 +429,14 @@ def plot_scalability_analysis(sizes: List[int]):
     ax2.grid(True)
     
     # Computation time plot
-    mean_comp_times = [np.mean(comp_time[i:i+size//4]) for i in range(0, len(comp_time), size//4)]
-    ax3.plot(sizes, mean_comp_times, 'o-', linewidth=2, markersize=8)
-    ax3.set_title('Computation Time')
+    comp_times = []
+    for i, size in enumerate(sizes):
+        start_idx = i * (size//4)
+        end_idx = start_idx + (size//4)
+        comp_times.append(np.mean(size_comp_times[start_idx:end_idx]))
+    
+    ax3.plot(sizes, comp_times, 'o-', linewidth=2, markersize=8)
+    ax3.set_title('Average Computation Time')
     ax3.set_xlabel('Network Size')
     ax3.set_ylabel('Time (s)')
     ax3.grid(True)
