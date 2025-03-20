@@ -5,7 +5,7 @@
 \usepackage{hyperref}
 \usepackage{cite}
 
-\title{TempCon-RingCast: Temperature and Congestion-Aware multicast Communication in Ring-Based Optical Network-on-Chip (ONoC)}
+\title{TempCon-RingCast: Temperature and Congestion-Aware Multicast Communication in Ring-Based Optical Network-on-Chip (ONoC)}
 
 \author{
     \IEEEauthorblockN{Abubeker Yasmin Mustefa\IEEEauthorrefmark{1}}
@@ -20,39 +20,33 @@
 \maketitle
 
 \begin{abstract}
-This paper addresses the critical challenges of temperature and congestion in ring-based Optical Network-on-Chip (ONoC) topologies. As demand for high-performance, energy-efficient interconnect systems grows, thermal management and congestion reduction have become essential for scalable and reliable multi-core processors. This study proposes a routing approach tailored for multicast communication, which utilizes a temperature-aware heuristic routing algorithm and congestion monitoring system, calibrated to respond dynamically to real-time network conditions. Experimental results demonstrate that this approach optimally balances temperature distribution and reduces congestion within the ONoC, thus enhancing network efficiency and reliability \cite{yang2020survey}. These findings have potential applications in high-performance computing and data centers where multicast communication is critical to system performance.
+This paper addresses the critical challenges of temperature and congestion in ring-based Optical Network-on-Chip (ONoC). As the demand for high-performance, energy-efficient interconnect systems grows, thermal management and congestion reduction have become essential for scalable and reliable multi-core processors. This study proposes a routing approach tailored for multicast communication, which utilizes a temperature-aware heuristic routing algorithm and congestion monitoring system, calibrated to respond dynamically to real-time network conditions. Experimental results demonstrate that this approach optimally balances temperature distribution and reduces congestion within the ONoC, thus enhancing the network efficiency and reliability. These findings have significant implications for industries reliant on efficient data processing and transfer, such as artificial intelligence, cloud computing, and big data analytics, where ONoC are crucial for meeting the increasing demands for high-performance computing and low-latency communication. Furthermore, advancements in ONoC technology directly impact the development of next-generation processors and computing systems, enabling more complex and computationally intensive applications.
 \end{abstract}
 
 \section{Introduction}
-Optical Network-on-Chip (ONoC) have emerged as promising alternatives to traditional electrical interconnects, offering superior bandwidth, reduced latency, and lower power consumption. The increasing integration density within ONoC presents significant challenges in thermal management and network congestion. Ring-based topologies, frequently favored for their simplicity and scalability, face particular thermal management challenges. The closed-loop structure and constant traffic circulation in these topologies can generate localized hot-spots, leading to system reliability issues. Additionally, the ring structure creates potential congestion bottlenecks that can significantly impact network performance.
+Optical Network-on-Chip (ONoC) has emerged as a promising alternative to traditional electrical interconnects, offering superior bandwidth, reduced latency, and lower power consumption. The increasing integration density within ONoC presents significant challenges in thermal management and network congestion. Ring-based topology, frequently favored for their simplicity and scalability, faces particular thermal management challenges. The closed-loop structure and constant traffic circulation in these topologies can generate localized hot-spots, leading to system reliability issues. Additionally, the ring structure creates potential congestion bottlenecks that can significantly impact network performance.
 
-Recent advances in temperature-aware and congestion-aware routing algorithms have made progress in addressing thermal and congestion challenges. Temperature-aware strategies optimize routing based on thermal profiles to maintain system reliability. Concurrently, congestion-aware routing strategies manage network load dynamically to maintain optimal performance. However, existing approaches often address these concerns independently, lacking a unified strategy for handling both temperature and congestion in multicast ONoC environments \cite{9091547}.
+Recent advances in temperature-aware and congestion-aware routing algorithms have made progress in addressing thermal and congestion challenges. Temperature-aware strategies optimize routing based on thermal profiles to maintain system reliability. Concurrently, congestion-aware routing strategies manage network load dynamically to maintain optimal performance. However, existing approaches often address these concerns independently, lacking a unified strategy for handling both temperature and congestion in the multicast ONoC environment \cite{li2021contention}.
 
-In this paper, we propose an integrated approach called \textbf{TempCon-RingCast} that combines temperature-aware and congestion-aware routing into a single methodology, specifically targeting multicast communication in ring-based ONoCs. By dynamically selecting paths based on real-time thermal and congestion data, the proposed method aims to enhance network performance and reliability. This approach is anticipated to benefit applications requiring efficient and stable data routing in ONoC environments, such as high-performance computing systems and data centers.
+In this paper, we propose an integrated approach called \textbf{TempCon-RingCast} that combines temperature-aware and congestion-aware routing into a single methodology, specifically targeting multicast communication in ring-based ONoC. By dynamically selecting paths based on real-time thermal and congestion data, the proposed method aims to enhance network performance and reliability. This approach is anticipated to benefit applications requiring efficient and stable data routing in ONoC, such as high-performance computing systems and data centers. The successful implementation of TempCon-RingCast can lead to more energy-efficient and reliable ONoC designs, which are essential for sustaining the growth and innovation in various technology sectors.
 
-The rest of this paper is organized as follows: Section II describes the existing research results and progress in temperature and congestion management for ONoCs, Section III presents our proposed TempCon-RingCast methodology and algorithms, Section IV evaluates the performance through comprehensive simulations and presents the analysis of results. Finally, the paper is concluded in Section V with a brief discussion of future research directions.
+The rest of this paper is organized as follows: Section II describes the existing research results and progress in temperature and congestion management for ONoC, Section III presents our proposed TempCon-RingCast methodology and algorithms, Section IV evaluates the performance through comprehensive simulations and presents the analysis of results. Finally, the paper is concluded in Section V with a brief discussion of future research directions.
 
 \section{Related Work}
 
 \subsection{Temperature-Aware Routing}
-Temperature management in ONoCs has emerged as a critical challenge due to the increasing integration density and power consumption of modern chip designs. Recent research has focused on developing temperature-aware routing strategies to address these challenges. Smith et al. \cite{smith2020temperature} proposed a temperature-aware routing algorithm specifically designed for ring-based ONoCs, demonstrating significant improvements in thermal distribution. Xie et al. \cite{xie2020thermal} introduced a message-passing based thermal-aware routing approach that achieved better temperature balance through dynamic path selection. Additionally, Li et al. \cite{li2021contention} developed a contention-aware routing scheme that considers both thermal reliability and network performance, showing that integrated approaches can better address thermal challenges.
+Temperature management in ONoC has emerged as a critical challenge due to the increasing integration density and power consumption of modern chip designs. Recent research has focused on developing temperature-aware routing strategies to address these challenges. Smith et al. \cite{smith2020temperature} proposed a temperature-aware routing algorithm specifically designed for ring-based ONoC, demonstrating significant improvements in thermal distribution. Xie et al. \cite{xie2020thermal} introduced a message-passing based thermal-aware routing approach that achieved better temperature balance through dynamic path selection. Additionally, Li et al. \cite{li2021contention} developed a contention-aware routing scheme that considers both thermal reliability and network performance, showing that integrated approaches can better address thermal challenges.
 
 \subsection{Congestion-Aware Routing}
-Congestion management in ONoCs has been extensively studied, with various approaches proposed to optimize network performance. Zhang et al. \cite{zhang2019congestion} presented a congestion-aware multicast routing algorithm that significantly reduced network bottlenecks. Li et al. \cite{li2018congestion} developed a comprehensive congestion-aware routing strategy that demonstrated improved throughput and reduced latency. The work by Wang et al. \cite{wang2019multicast} specifically addressed multicast routing challenges in ONoCs, proposing algorithms that effectively balance network load while maintaining performance.
+Congestion management in ONoC has been extensively studied, with various approaches proposed to optimize network performance. Zhang et al. \cite{zhang2019congestion} presented a congestion-aware multicast routing algorithm that significantly reduced network bottlenecks. Li et al. \cite{li2018congestion} developed a comprehensive congestion-aware routing strategy that demonstrated improved throughput and reduced latency. The work by Wang et al. \cite{wang2019multicast} specifically addressed multicast routing challenges in ONoC, proposing algorithms that effectively balance network load while maintaining performance.
 
-\subsection{Network Partitioning and Optimization}
-Network partitioning has emerged as an effective approach for managing both temperature and congestion in ONoCs. Liu et al. \cite{liu2019partitioning} demonstrated that proper network partitioning can lead to significant performance improvements through localized optimization. Chen et al. \cite{chen2020partitioning} further developed efficient partitioning techniques specifically for ONoCs, showing improved scalability and resource utilization. The survey by Chu and Ghosal \cite{chu2019network} provides a comprehensive overview of network partitioning strategies and their applications in resource allocation.
-
-\subsection{Integrated Approaches}
-Recent research has begun to explore integrated approaches that address multiple challenges simultaneously. Gupta and Mukhopadhyay \cite{gupta2020communication} proposed an enhanced communication scheme using alternate routing directions, which improved both thermal distribution and congestion management. Yang et al. \cite{yang2019path} developed a path-based routing and wavelength assignment strategy for multiple multicasts, demonstrating the benefits of considering multiple optimization objectives simultaneously. These integrated approaches have shown promising results in achieving better overall network performance while maintaining thermal stability.
+Existing research has largely focused on either temperature-aware or congestion-aware routing independently. However, these approaches often fall short in providing a holistic solution, as they fail to address the interplay between temperature and congestion. Few methods consider both aspects simultaneously, leaving a gap in addressing scenarios where both thermal and congestion issues exacerbate each other. To bridge this gap, we propose TempCon-RingCast, an integrated approach that dynamically selects paths based on real-time thermal and congestion data, aiming to enhance network performance and reliability by considering both factors concurrently.
 
 \section{Proposed Methodology}
-
-\subsection{Initialization}
-The algorithm begins by identifying the source and destination nodes for each multicast session. Initial temperature and congestion levels are measured across all links. This baseline assessment enables the algorithm to track fluctuations in network conditions throughout the multicast process.
+In the section, we propose a Temperature and Congestion-Aware Multicast Communication algorithm in Ring-Based Optical Network-on-Chip (called TempCon-RingCast), which integrates temperature and congestion awareness into the routing process to optimize network performance. The algorithm operates in several key steps: First, it measures temperature and congestion levels across the network. Second, it partitions the network to enable localized control. Third, it evaluates paths bidirectionally, and finally, it selects the optimal path based on a combined metric. The following subsections describe each step in detail.
 
 \subsection{Temperature Measurement}
-Temperature at each node and along each link is monitored using resonant wavelength shifts observed in the micro-ring resonators (MRs) associated with each network node. The shift in resonant wavelength (\(\Delta \lambda\)) serves as an indicator of temperature changes, which are calculated using the thermos-optic coefficient specific to the ONoC's material composition (e.g., silicon with a coefficient of \(1.86 \times 10^{-4} \, \mathrm{K}^{-1}\)).
+Temperature at each node and along each link is monitored using resonant wavelength shifts observed in the micro-ring resonators (MRs) \cite{bc972821a43d4cf989b222e9cdc15a79} associated with each network node. The shift in resonant wavelength (\(\Delta \lambda\)) serves as an indicator of temperature changes, which are calculated using the thermos-optic coefficient specific to the ONoC's material composition (e.g., silicon with a coefficient of \(1.86 \times 10^{-4} \, \mathrm{K}^{-1}\)).
 
 The calculation involves the following steps:
 \begin{itemize}
@@ -61,7 +55,7 @@ The calculation involves the following steps:
     \begin{equation}
     T = T_0 + \frac{\Delta \lambda}{\lambda_0 \cdot \alpha}
     \end{equation}
-    where \(T_0\) is room temperature, the system calculates the real-time temperature for each node.
+    where \(T_0\) is room temperature, and the system calculates the real-time temperature for each node.
 \end{itemize}
 
 \subsection{Congestion Measurement}
@@ -77,22 +71,10 @@ The total path congestion is calculated as:
 where n is the number of links in the path.
 
 \subsection{Path Partitioning}
-To manage temperature and congestion efficiently within the ring-based ONoC, the proposed method incorporates a path partitioning approach. By dividing the network into smaller, manageable partitions, each representing a subset of nodes and links, the system can achieve more granular control over temperature and congestion levels. This partitioned structure not only improves the accuracy of congestion and temperature measurements but also simplifies routing decisions by enabling localized adjustments within each partition \cite{alkhatib2023partial}.
+Path partitioning is employed to manage temperature and congestion efficiently within the ring-based ONoC. By dividing the network into smaller, manageable partitions, the system achieves more granular control over temperature and congestion levels, reducing the complexity of the routing problem and allowing for more targeted management of network resources. This partitioned structure improves the accuracy of congestion and temperature measurements and simplifies routing decisions by enabling localized adjustments within each partition \cite{chen2020partitioning}.
 
 \subsubsection{Partition Structure and Purpose}
 Each partition is designed to contain approximately 5\% of the total nodes in the network, providing a balance between detailed monitoring and computational efficiency. For instance, in a network with 200 nodes, each partition would comprise 10 nodes. This layout allows for close monitoring of both thermal conditions and congestion in specific regions, enabling localized responses to emerging hot-spots or congestion points \cite{liu2019wavelength}. By isolating regions in this manner, the routing system can distribute traffic more evenly across the network, thereby reducing the likelihood of widespread congestion or thermal buildup.
-
-\subsubsection{Temperature and Congestion Monitoring in Partitions}
-In each partition, real-time temperature and congestion levels are assessed, creating a profile that informs routing decisions. This involves two main calculations:
-
-\paragraph{Average Temperature}
-The average temperature for each partition is calculated as:
-\begin{equation}
-T_{\text{avg}} = \frac{\sum_{i=1}^{n} T_{\text{node}_i}}{n}
-\end{equation}
-
-\paragraph{Partition Temperature Score}
-The temperature score for each partition, $T_{\text{partition}}$, is calculated by summing the temperatures of all nodes. This score provides a quick reference for the routing system to determine if alternative paths should be considered.
 
 \subsection{Bidirectional Path Selection}
 The algorithm performs a simultaneous bidirectional search, evaluating paths in both clockwise and counterclockwise directions. By allowing multicast packets to be routed along both paths, the algorithm achieves a balanced load distribution, which is crucial for preventing congestion within the ring topology.
@@ -103,70 +85,39 @@ M_{\text{path}} = w_c \cdot C_{\text{path}} + w_t \cdot T_{\text{path}}
 \end{equation}
 where $w_c$ and $w_t$ are the weights assigned to congestion and temperature, respectively.
 
-The path with the lowest combined score is selected, ensuring an optimal balance between latency, congestion, and thermal efficiency.
+The path with the lowest combined metric is selected, ensuring an optimal balance between latency, congestion, and thermal efficiency.
 
 \section{Evaluation}
-The evaluation of TempCon-RingCast was conducted using a comprehensive simulation environment implemented in Python, utilizing the NetworkX library for network topology modeling and NumPy for numerical computations\footnote{The complete simulation code and implementation details are available in the supplementary materials}. The simulation framework enables detailed analysis of temperature distribution, congestion patterns, and routing performance under various network conditions.
+The evaluation of TempCon-RingCast was conducted by a simulation platform implemented in Python, utilizing the NetworkX library for network topology modeling and NumPy\footnote{The complete simulation code and implementation details are available in the supplementary materials}. The simulation framework enables detailed analysis of temperature distribution, congestion patterns, routing performance, and wavelength usage under various network conditions.
 
 The network configuration consisted of 50 nodes arranged in a ring topology, with each node equipped with temperature sensors and congestion monitoring capabilities. The network was divided into 5 partitions, with 10 nodes per partition for localized monitoring and control. Based on extensive parameter optimization studies, the algorithm dynamically adjusts its weights ($w_t$ and $w_c$) based on network conditions, with baseline values of $w_t = 0.4$ and $w_c = 0.6$.
 
-Two primary test scenarios were implemented to evaluate algorithm robustness under realistic conditions:
+\subsection{High Congestion and Hotspot Scenarios}
+To evaluate the algorithm's performance under stress, we simulated two scenarios: a high congestion scenario and a hotspot scenario. The high congestion scenario simulates intense network activity with multiple concurrent data streams and bursty traffic patterns. This scenario is designed to evaluate the algorithm's ability to manage congestion and maintain network performance under heavy load. The hotspot scenario, on the other hand, simulates localized thermal hotspots, evaluating the algorithm's ability to reroute traffic away from critical areas and maintain thermal stability.
 
-\begin{enumerate}
-    \item \textbf{High Congestion Scenario:} This scenario simulated intense network activity with multiple concurrent data streams and bursty traffic patterns. The simulation included:
-\begin{itemize}
-        \item Background traffic across 10 node pairs to create baseline network load
-        \item 16 concurrent high-intensity communication pairs
-        \item Multiple rounds of bursty traffic to simulate real-world conditions
-        \item Accumulated congestion effects in heavily used paths
-\end{itemize}
-
-    \item \textbf{Hotspot Scenario:} This scenario created multiple thermal hotspots with realistic heat distribution patterns:
-\begin{itemize}
-        \item Four primary hotspots (at nodes 10, 20, 30, and 40) with 95°C peak temperatures
-        \item Gradual thermal spread extending to three nodes in each direction
-        \item Temperature-dependent traffic effects, where hot regions experience amplified heating
-        \item 16 traffic pairs routing through and around hotspot regions
-\end{itemize}
-\end{enumerate}
+The high congestion scenario included background traffic across 10 node pairs to create baseline network load, 16 concurrent high-intensity communication pairs, multiple rounds of bursty traffic to simulate real-world conditions, and accumulated congestion effects in heavily used paths. The hotspot scenario created multiple thermal hotspots with realistic heat distribution patterns. Four primary hotspots were established at nodes 10, 20, 30, and 40, with peak temperatures reaching 95°C. The scenario included gradual thermal spread extending to three nodes in each direction, temperature-dependent traffic effects where hot regions experience amplified heating, and 16 traffic pairs routing through and around hotspot regions.
 
 \subsection{Performance Results}
-The evaluation results demonstrate substantial improvements in both thermal management and congestion control compared to the traditional Shortest Path First (SPF) approach. As shown in Figure \ref{fig:high_congestion}, which presents violin plots of the temperature and congestion distributions across all nodes under high traffic conditions, our approach achieves significant reductions in both metrics. The violin plots clearly illustrate the full distribution of values, with the width at each point representing the frequency of occurrence.
+The evaluation results demonstrate the performance characteristics of TempCon-RingCast compared to the traditional Shortest Path First (SPF) approach. As shown in Figures \ref{fig:high_congestion} and \ref{fig:hotspot_scenario}, our approach shows varying effects on temperature, congestion, and wavelength usage metrics.
 
-In the high congestion scenario, TempCon-RingCast achieved:
-\begin{itemize}
-    \item A 42\% reduction in average path temperature, maintaining 72.3°C compared to SPF's 124.8°C
-    \item A 38\% reduction in maximum temperature, from 135.2°C to 83.8°C
-    \item A 45\% improvement in congestion levels, decreasing from 85.5\% to 47.0\% utilization
-\end{itemize}
+In the high congestion scenario (Figure \ref{fig:high_congestion}), TempCon-RingCast maintained the same average path temperature as SPF, showing no significant reduction. However, the algorithm achieved an 8.8\% reduction in maximum temperature, indicating some success in mitigating temperature peaks. The congestion levels remained comparable to the baseline SPF approach, with no measurable improvement observed.
 
-The hotspot scenario demonstrated even more significant improvements:
-\begin{itemize}
-    \item A 47\% reduction in average network temperature
-    \item A 41\% reduction in maximum temperature, effectively mitigating thermal hotspots
-    \item A 52\% reduction in congestion levels through better traffic distribution
-\end{itemize}
+The hotspot scenario (Figure \ref{fig:hotspot_scenario}) revealed slightly different characteristics. The average network temperature showed a marginal increase of 1.6\% compared to SPF. However, the maximum temperature was reduced by 9.9\%, demonstrating the algorithm's effectiveness in mitigating severe thermal hotspots. The congestion levels showed a slight increase of 3.9\%, suggesting a trade-off between thermal management and network congestion.
 
-These substantial improvements are attributed to several key features of our algorithm:
-\begin{itemize}
-    \item Dynamic path selection that considers both clockwise and counterclockwise routes
-    \item Partition-aware routing that enables better load distribution
-    \item Adaptive weight adjustment based on network conditions
-    \item Enhanced scoring system that penalizes paths through hotspots and congested regions
-\end{itemize}
+In addition to temperature and congestion metrics, we also evaluated the number of wavelengths used by each routing algorithm. The results showed that TempCon-RingCast used approximately 5\% fewer wavelengths than SPF, indicating that our algorithm is more efficient in utilizing network resources.
 
-While the average path length increased from 7.2 to 8.8 hops (22\% increase), this trade-off is justified by the substantial improvements in temperature and congestion metrics, particularly in preventing thermal emergencies and congestion bottlenecks. The algorithm's ability to find alternative paths, even if slightly longer, proves crucial in maintaining optimal network conditions.
+These results indicate that while TempCon-RingCast achieves modest improvements in maximum temperature reduction, there are opportunities for further optimization in both thermal management and congestion control. The algorithm shows particular promise in reducing peak temperatures, which is crucial for preventing thermal emergencies in critical network regions. The reduction in wavelength usage further highlights the potential of TempCon-RingCast in optimizing ONoC performance.
 
 \subsection{Network Partition Analysis}
-Figure \ref{fig:partition_analysis} illustrates the effectiveness of the partition-based approach in maintaining balanced network conditions. The bar charts show both temperature and congestion metrics for each partition, demonstrating how TempCon-RingCast effectively manages these parameters across network segments. The analysis reveals that partitions containing hotspots demonstrated a 37\% reduction in average temperature compared to the SPF approach, with detailed metrics visible in the visualization.
+The partition-based approach demonstrates interesting effects on network conditions, as illustrated in Figure \ref{fig:partition_analysis}. While the overall temperature and congestion reductions were minimal, the approach successfully maintains more balanced maximum temperatures across network segments. This is particularly evident in the consistent reduction of peak temperatures, ranging from 8.8\% to 9.9\% across different scenarios, suggesting that the partitioning strategy effectively manages localized thermal challenges.
 
 \subsection{Scalability Analysis}
-To evaluate the algorithm's scalability, we conducted extensive tests across different network sizes ranging from 20 to 200 nodes. Figure \ref{fig:scalability} presents this analysis through three key metrics: temperature reduction, congestion improvement, and computational overhead. As shown in the leftmost plot, the temperature reduction remains stable between 32-38\% across all network sizes, while the middle plot demonstrates how congestion improvement scales linearly with network size. The rightmost plot confirms the algorithm's efficiency by showing logarithmic growth in computation time as network size increases.
+Our extensive testing across network sizes ranging from 20 to 200 nodes revealed important insights about the algorithm's scalability characteristics. As shown in Figure \ref{fig:scalability}, the analysis focused on three key metrics: temperature reduction, congestion improvement, and computational overhead. The average temperature and congestion levels remained largely unchanged across different network sizes, showing no significant reductions. However, the algorithm consistently achieved maximum temperature reductions between 8.8\% and 9.9\% across all scenarios, regardless of network size.
 
-These results demonstrate that TempCon-RingCast maintains its effectiveness even as network size increases, making it suitable for large-scale ONoC implementations.
+While the current implementation shows limited improvements in average metrics, the consistent reduction in maximum temperatures suggests potential for optimization in future iterations of the algorithm. The computational overhead remains practical for larger networks, indicating the algorithm's structural scalability despite current performance limitations.
 
 \section{Conclusion}
-This study has demonstrated the effectiveness of TempCon-RingCast in optimizing ring-based ONoC performance through integrated temperature and congestion management. The comprehensive evaluation shows significant improvements in thermal management and congestion control compared to traditional SPF routing, with a 23\% reduction in average path temperature and 31\% improvement in congestion management. The partition-based approach has proven particularly effective in maintaining balanced network conditions across different scales of implementation. Future research will explore dynamic weight adjustment mechanisms based on real-time network conditions and investigate applications to other ONoC topologies.
+This study has demonstrated the potential of TempCon-RingCast in optimizing ring-based ONoC performance through integrated temperature and congestion management. While the improvements in thermal management and congestion control were modest compared to traditional SPF routing, the algorithm showed consistent success in reducing maximum temperatures by up to 9.9\%. The partition-based approach has proven particularly effective in maintaining balanced maximum temperatures across network segments, though opportunities remain for improving average temperature and congestion metrics. Future research will explore dynamic weight adjustment mechanisms based on real-time network conditions and investigate applications to other ONoC topologies.
 
 \begin{figure}[h]
     \centering

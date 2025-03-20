@@ -42,6 +42,7 @@ class NodeState:
     temperature: float
     congestion: float
     partition_id: int
+    wavelengths_used: int  # Track wavelengths used
 
 class RingNetwork:
     def __init__(self, num_nodes: int, num_partitions: int):
@@ -64,7 +65,8 @@ class RingNetwork:
             self.node_states[i] = NodeState(
                 temperature=25.0,  # Room temperature
                 congestion=0.0,
-                partition_id=partition_id
+                partition_id=partition_id,
+                wavelengths_used=0  # Initialize wavelengths used
             )
     
     def simulate_traffic(self, source: int, target: int, load: float):
@@ -96,7 +98,11 @@ class RoutingAlgorithm:
     @staticmethod
     def spf_route(network: RingNetwork, source: int, target: int) -> List[int]:
         """Shortest Path First routing"""
-        return nx.shortest_path(network.G, source, target)
+        path = nx.shortest_path(network.G, source, target)
+        # Increment wavelengths used along the path
+        for node in path:
+            network.node_states[node].wavelengths_used += 1
+        return path
     
     @staticmethod
     def tempcon_route(network: RingNetwork, source: int, target: int,
@@ -158,6 +164,10 @@ class RoutingAlgorithm:
                 best_score = score
                 best_path = path
         
+        # Increment wavelengths used along the path
+        for node in best_path:
+            network.node_states[node].wavelengths_used += 1
+        
         return best_path
 
 # Cell 7 - Markdown
@@ -195,6 +205,7 @@ def run_high_congestion_scenario():
         for src, dst in traffic_pairs:
             # SPF routing - accumulates in shortest paths
             path = RoutingAlgorithm.spf_route(network_spf, src, dst)
+            
             for node in path:
                 network_spf.node_states[node].congestion += 1.5
                 network_spf.node_states[node].temperature += 10.0
@@ -268,11 +279,12 @@ def run_hotspot_scenario():
 
 # Cell 10 - Code
 def plot_metrics_comparison(spf_net: RingNetwork, tempcon_net: RingNetwork, title: str):
-    """Generate comparison plot for temperature and congestion metrics
-    This generates Figure 1 in the paper: Comparative analysis showing temperature
-    and congestion distributions between SPF and TempCon-RingCast approaches.
+    """Generate comparison plot for temperature, congestion, and wavelength metrics
+    This generates Figure 1 in the paper: Comparative analysis showing temperature,
+    congestion, and wavelength distributions between SPF and TempCon-RingCast approaches.
     Used in Section IV.A (Performance Results)."""
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
+    fig, axes = plt.subplots(1, 3, figsize=(18, 6))  # Increased to 3 subplots
+    ax1, ax2, ax3 = axes  # Unpack axes for easier handling
     
     # Temperature comparison with violin plots
     spf_temps = [spf_net.node_states[n].temperature for n in range(spf_net.num_nodes)]
@@ -307,8 +319,22 @@ def plot_metrics_comparison(spf_net: RingNetwork, tempcon_net: RingNetwork, titl
     ax2.set_title(f'Congestion Distribution\n(Mean reduction: {cong_improvement:.1f}%)')
     ax2.set_ylabel('Congestion Level (%)')
     
+    # Wavelength Usage Comparison
+    spf_wavelengths = [spf_net.node_states[n].wavelengths_used for n in range(spf_net.num_nodes)]
+    tempcon_wavelengths = [tempcon_net.node_states[n].wavelengths_used for n in range(tempcon_net.num_nodes)]
+    
+    # Calculate wavelength reduction
+    wavelength_reduction = ((np.mean(spf_wavelengths) - np.mean(tempcon_wavelengths)) / np.mean(spf_wavelengths)) * 100
+    
+    # Violin plots for wavelength usage
+    vp3 = ax3.violinplot([spf_wavelengths, tempcon_wavelengths], showmeans=True, showmedians=True)
+    ax3.set_xticks([1, 2])
+    ax3.set_xticklabels(['SPF', 'TempCon'])
+    ax3.set_title(f'Wavelength Usage\n(Mean reduction: {wavelength_reduction:.1f}%)')
+    ax3.set_ylabel('Wavelengths Used')
+    
     # Style violin plots
-    for vp in [vp1, vp2]:
+    for vp in [vp1, vp2, vp3]:
         for pc in vp['bodies']:
             pc.set_facecolor('#D43F3A')
             pc.set_alpha(0.3)
@@ -323,7 +349,8 @@ def plot_metrics_comparison(spf_net: RingNetwork, tempcon_net: RingNetwork, titl
     return {
         'temp_improvement': temp_improvement,
         'max_temp_improvement': max_temp_improvement,
-        'cong_improvement': cong_improvement
+        'cong_improvement': cong_improvement,
+        'wavelength_reduction': wavelength_reduction  # Added wavelength reduction
     }
 
 def plot_partition_analysis(network: RingNetwork, title: str):
@@ -353,7 +380,7 @@ def plot_partition_analysis(network: RingNetwork, title: str):
     bars2 = ax2.bar(range(network.num_partitions), cong)
     ax2.set_title('Congestion by Partition')
     ax2.set_xlabel('Partition ID')
-    ax2.set_ylabel('Average Congestion Level (%)')
+    ax1.set_ylabel('Average Congestion Level (%)')
     
     # Add value labels on bars
     for bar in bars2:
@@ -369,6 +396,7 @@ def plot_scalability_analysis(sizes: List[int]):
     """Generate scalability analysis visualization"""
     temp_reduction = []
     cong_reduction = []
+    wavelength_reduction = []  # Store wavelength reduction
     comp_times = []  # Store average computation time for each size
     
     for size in sizes:
@@ -408,11 +436,16 @@ def plot_scalability_analysis(sizes: List[int]):
         tempcon_cong = np.mean([network_tempcon.node_states[n].congestion for n in range(size)])
         cong_reduction.append((spf_cong - tempcon_cong) / spf_cong * 100)
         
+        spf_wavelengths = np.mean([network_spf.node_states[n].wavelengths_used for n in range(size)])
+        tempcon_wavelengths = np.mean([network_tempcon.node_states[n].wavelengths_used for n in range(size)])
+        wavelength_reduction.append((spf_wavelengths - tempcon_wavelengths) / spf_wavelengths * 100)
+        
         # Store average computation time for this size
         comp_times.append(np.mean(size_comp_times))
     
     # Create figure
-    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(15, 5))
+    fig, axes = plt.subplots(1, 4, figsize=(20, 5))  # Increased to 4 subplots
+    ax1, ax2, ax3, ax4 = axes  # Unpack axes for easier handling
     
     # Temperature reduction plot
     ax1.plot(sizes, temp_reduction, 'o-', linewidth=2, markersize=8)
@@ -428,6 +461,13 @@ def plot_scalability_analysis(sizes: List[int]):
     ax2.set_ylabel('Reduction (%)')
     ax2.grid(True)
     
+    # Wavelength reduction plot
+    ax3.plot(sizes, wavelength_reduction, 'o-', linewidth=2, markersize=8)
+    ax3.set_title('Wavelength Reduction')
+    ax3.set_xlabel('Network Size')
+    ax3.set_ylabel('Reduction (%)')
+    ax3.grid(True)
+    
     # Computation time plot
     comp_times = []
     for i, size in enumerate(sizes):
@@ -435,11 +475,11 @@ def plot_scalability_analysis(sizes: List[int]):
         end_idx = start_idx + (size//4)
         comp_times.append(np.mean(size_comp_times[start_idx:end_idx]))
     
-    ax3.plot(sizes, comp_times, 'o-', linewidth=2, markersize=8)
-    ax3.set_title('Average Computation Time')
-    ax3.set_xlabel('Network Size')
-    ax3.set_ylabel('Time (s)')
-    ax3.grid(True)
+    ax4.plot(sizes, comp_times, 'o-', linewidth=2, markersize=8)
+    ax4.set_title('Average Computation Time')
+    ax4.set_xlabel('Network Size')
+    ax4.set_ylabel('Time (s)')
+    ax4.grid(True)
     
     plt.suptitle('Scalability Analysis')
     plt.tight_layout()
@@ -450,7 +490,8 @@ def plot_scalability_analysis(sizes: List[int]):
         'avg_temp_reduction': np.mean(temp_reduction),
         'avg_cong_reduction': np.mean(cong_reduction),
         'max_temp_reduction': np.max(temp_reduction),
-        'max_cong_reduction': np.max(cong_reduction)
+        'max_cong_reduction': np.max(cong_reduction),
+        'wavelength_reduction': np.mean(wavelength_reduction)  # Added wavelength reduction
     }
 
 # Cell 11 - Markdown
@@ -489,15 +530,18 @@ try:
     print(f"- Temperature reduction: {high_cong_metrics['temp_improvement']:.1f}%")
     print(f"- Maximum temperature reduction: {high_cong_metrics['max_temp_improvement']:.1f}%")
     print(f"- Congestion reduction: {high_cong_metrics['cong_improvement']:.1f}%")
+    print(f"- Wavelength reduction: {high_cong_metrics['wavelength_reduction']:.1f}%")  # Added wavelength reduction
     print(f"\nHotspot Scenario:")
     print(f"- Temperature reduction: {hotspot_metrics['temp_improvement']:.1f}%")
     print(f"- Maximum temperature reduction: {hotspot_metrics['max_temp_improvement']:.1f}%")
     print(f"- Congestion reduction: {hotspot_metrics['cong_improvement']:.1f}%")
+    print(f"- Wavelength reduction: {hotspot_metrics['wavelength_reduction']:.1f}%")  # Added wavelength reduction
     print(f"\nScalability Analysis:")
     print(f"- Average temperature reduction: {scalability_metrics['avg_temp_reduction']:.1f}%")
     print(f"- Average congestion reduction: {scalability_metrics['avg_cong_reduction']:.1f}%")
     print(f"- Maximum temperature reduction: {scalability_metrics['max_temp_reduction']:.1f}%")
     print(f"- Maximum congestion reduction: {scalability_metrics['max_cong_reduction']:.1f}%")
+    print(f"- Wavelength reduction: {scalability_metrics['wavelength_reduction']:.1f}%")  # Added wavelength reduction
 
 except Exception as e:
     print(f"An error occurred: {str(e)}")
